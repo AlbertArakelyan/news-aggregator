@@ -2,17 +2,20 @@
 
 **This is the module the case study is graded on.** The brief asks for three news APIs with three different response shapes; the whole architectural question is how they become one feed without the feed knowing about any of them.
 
-> Not built yet. This file is the contract to build against — see step 3 of `PLAN.md`.
-
 ## The contract
 
 ```
-types.ts      NewsSource, Article, ArticleQuery, SourceCapabilities
-guardian.ts   Guardian response  -> Article
-nyt.ts        NYT response       -> Article
-newsapi.ts    NewsAPI response   -> Article
-registry.ts   the list of sources
+types.ts         NewsSource, Article, ArticleQuery, SourceCapabilities
+normalize.ts     shared field cleaners (HTML, dates, bylines)
+guardian.ts      Guardian response  -> Article
+nyt.ts           NYT response       -> Article
+newsapi.ts       NewsAPI response   -> Article
+registry.ts      the list of sources
+__fixtures__/    recorded responses, including the edge cases each provider emits
+__tests__/       the mapping tests
 ```
+
+**`buildUrl` and `parse` are pure** — no fetch, no IO. `lib/aggregator.ts` owns every network call. That separation is what makes the mapping logic testable against a fixture instead of the live API, and it is the reason the tests run in milliseconds with no keys.
 
 `Article` is the internal shape. Nothing provider-shaped escapes an adapter — the feed, the components, and the API route know only `Article`.
 
@@ -59,4 +62,16 @@ Add every new key to `.env.example` with an **empty** value.
 
 ## Testing
 
-The mappings are pure functions over recorded fixtures — the highest-value thing in the repo to test, and the clearest DRY/SOLID signal to a reviewer. Test against a saved response, not the live API.
+```bash
+yarn test                                   # all
+yarn test lib/sources/__tests__/adapters.test.ts   # one file
+yarn test -t "drops [Removed] tombstones"          # one test
+```
+
+The mappings are pure functions over recorded fixtures, so they test in milliseconds with no keys. The fixtures deliberately carry the junk each provider really emits — an unparseable date, a missing headline, HTML inside a description, NewsAPI's `[Removed]` tombstones, and one story syndicated across two providers so dedupe is actually exercised.
+
+**Add the edge case to the fixture, not a mock.** When a provider surprises you in production, the fix is a new entry in `__fixtures__/` plus a test that fails without your change.
+
+## Offline mode
+
+`NEWS_FIXTURES=1` makes the aggregator serve these fixtures instead of calling the providers, so the whole app runs with no keys, or when a free-tier limit is spent. It still goes through `parse()`, so it exercises the real normalization path rather than a parallel one that could drift.

@@ -1,0 +1,46 @@
+{
+  "status": "ok",
+  "totalResults": 4,
+  "articles": [
+    {
+      "source": { "id": "reuters", "name": "Reuters" },
+      "author": "Reuters Staff",
+      "title": "Central bank holds rates steady",
+      "description": "The decision was widely expected.",
+      "url": "https://www.reuters.com/markets/rates-hold-2026-07-11/",
+      "urlToImage": "https://www.reuters.com/img/rates.jpg",
+      "publishedAt": "2026-07-11T11:00:00Z",
+      "content": "…"
+    },
+    {
+      "source": { "id": null, "name": "BBC News" },
+      "author": null,
+      "title": "Chip shortage eases as new fabs come online",
+      "description": "Syndicated duplicate of the Guardian story — must dedupe.",
+      "url": "https://www.theguardian.com/technology/2026/jul/10/chip-shortage-eases?utm_source=newsapi",
+      "urlToImage": null,
+      "publishedAt": "2026-07-10T14:05:00Z",
+      "content": "…"
+    },
+    {
+      "source": { "id": null, "name": "[Removed]" },
+      "author": null,
+      "title": "[Removed]",
+      "description": "[Removed]",
+      "url": "https://removed.com",
+      "urlToImage": null,
+      "publishedAt": "2026-07-10T00:00:00Z",
+      "content": "[Removed]"
+    },
+    {
+      "source": { "id": null, "name": "The Verge" },
+      "author": "Nilay Patel",
+      "title": "",
+      "description": "Empty title — must be dropped.",
+      "url": "https://www.theverge.com/2026/7/9/empty",
+      "urlToImage": null,
+      "publishedAt": "2026-07-09T10:00:00Z",
+      "content": "…"
+    }
+  ]
+}

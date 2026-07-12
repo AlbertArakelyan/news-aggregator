@@ -1,0 +1,42 @@
+{
+  "response": {
+    "status": "ok",
+    "total": 3,
+    "results": [
+      {
+        "id": "technology/2026/jul/10/chip-shortage-eases",
+        "type": "article",
+        "sectionId": "technology",
+        "sectionName": "Technology",
+        "webPublicationDate": "2026-07-10T14:05:00Z",
+        "webTitle": "Chip shortage eases as new fabs come online",
+        "webUrl": "https://www.theguardian.com/technology/2026/jul/10/chip-shortage-eases",
+        "fields": {
+          "trailText": "<p>Analysts say the <strong>squeeze</strong> is finally loosening.</p>",
+          "thumbnail": "https://media.guim.co.uk/abc123/500.jpg",
+          "byline": "Alex Hern"
+        }
+      },
+      {
+        "id": "business/2026/jul/09/markets-rally",
+        "sectionId": "business",
+        "sectionName": "Business",
+        "webPublicationDate": "2026-07-09T08:00:00Z",
+        "webTitle": "Markets rally on rate-cut hopes",
+        "webUrl": "https://www.theguardian.com/business/2026/jul/09/markets-rally",
+        "fields": {
+          "trailText": "Investors bet on an autumn cut.",
+          "byline": "by Jane Doe"
+        }
+      },
+      {
+        "id": "world/2026/jul/08/broken-record",
+        "sectionId": "world",
+        "webPublicationDate": "not-a-date",
+        "webTitle": "Unparseable date — must be dropped",
+        "webUrl": "https://www.theguardian.com/world/2026/jul/08/broken-record",
+        "fields": {}
+      }
+    ]
+  }
+}

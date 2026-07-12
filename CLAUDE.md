@@ -47,9 +47,20 @@ yarn dev      # dev server on http://localhost:3000
 yarn build    # production build
 yarn start    # serve the production build
 yarn lint     # eslint (flat config, no path arg needed)
+yarn test     # vitest, single run
 ```
 
-There is no test runner configured yet. If tests are added, wire the script into `package.json` and record the single-test invocation here.
+**Single test file / single test:**
+
+```bash
+yarn test lib/sources/__tests__/adapters.test.ts
+yarn test -t "drops [Removed] tombstones"
+yarn test:watch
+```
+
+Vitest does not read `tsconfig.json`, so the `@/*` alias is re-declared in `vitest.config.ts`. Tests live in `__tests__/` beside the code they cover; fixtures in `__fixtures__/`.
+
+Set **`NEWS_FIXTURES=1`** to run the whole app against the recorded fixtures with no API keys at all.
 
 ## Docker
 
@@ -89,9 +100,20 @@ An interview take-home: the UI for a **news aggregator** that pulls articles fro
 
 ## State of the codebase
 
-Done: Docker, the README, the design system (`styles/base.css` + theming), and the ten UI primitives in `components/UI`. See `PLAN.md` — steps 1 and 2 are complete.
+Done (`PLAN.md` steps 1–3, plus the feed): Docker, the README, the design system, the ten UI primitives, the three source adapters + aggregator behind `/api/articles`, and a server-rendered feed at `/`.
 
-Not built: everything that makes it a news aggregator. No source adapters, no `/api/articles`, no feed, no search, no filters, no preferences. `pages/index.tsx` is a `Hello world` placeholder and `pages/api/hello.ts` is still the create-next-app sample — treat both as replaceable.
+Not built: **search and filters** (step 5) and the **personalized feed** (step 6) — the two remaining requirements from the brief. `pages/api/hello.ts` is still the create-next-app sample and is replaceable.
+
+## Data flow
+
+Everything provider-facing is **server-side**, because this repo is public and the keys must not reach the browser.
+
+- `lib/sources/*` — one adapter per provider. `buildUrl` and `parse` are **pure**; the aggregator owns all IO. That is what makes them testable against fixtures.
+- `lib/aggregator.ts` — fans out with `Promise.allSettled`, so one dead provider **degrades** the feed instead of emptying it, then dedupes by URL and sorts by date.
+- `pages/index.tsx` — `getServerSideProps` calls `aggregate` **directly**, not our own `/api/articles`. The Next docs are explicit about this: GSSP already runs on the server, so proxying through your own route just adds a hop.
+- `pages/api/articles.ts` — the same aggregator, for **client-side** refetches when a filter changes.
+
+Both entry points parse the query with `lib/query.ts`, so an SSR load and a client-side filter interpret the same URL identically.
 
 `pages/ui.tsx` is a component gallery (a Storybook stand-in) rendering every primitive in every variant. Keep it in sync when the library changes, and **delete it before final delivery** — it is developer scaffolding, not product.
 

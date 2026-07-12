@@ -1,0 +1,38 @@
+{
+  "status": "OK",
+  "response": {
+    "docs": [
+      {
+        "_id": "nyt://article/aaaa-1111",
+        "web_url": "https://www.nytimes.com/2026/07/11/technology/ai-chips.html",
+        "abstract": "The build-out is finally meeting demand.",
+        "snippet": "The build-out is finally meeting demand.",
+        "pub_date": "2026-07-11T09:30:00+0000",
+        "section_name": "Technology",
+        "headline": { "main": "A.I. Chip Supply Catches Up With Demand" },
+        "byline": { "original": "By Cade Metz" },
+        "multimedia": [{ "url": "images/2026/07/11/tech/ai-chips/ai-chips-articleLarge.jpg" }]
+      },
+      {
+        "_id": "nyt://article/bbbb-2222",
+        "web_url": "https://www.nytimes.com/2026/07/10/science/mars-sample.html",
+        "abstract": "",
+        "snippet": "The capsule touched down in Utah.",
+        "pub_date": "2026-07-10T18:00:00+0000",
+        "section_name": "Science",
+        "headline": { "main": "Mars Sample Returns to Earth" },
+        "byline": { "original": "By Kenneth Chang" },
+        "multimedia": { "default": { "url": "https://static01.nyt.com/images/2026/07/10/mars.jpg" } }
+      },
+      {
+        "_id": "nyt://article/cccc-3333",
+        "web_url": "https://www.nytimes.com/2026/07/09/business/no-headline.html",
+        "pub_date": "2026-07-09T12:00:00+0000",
+        "section_name": "Business Day",
+        "headline": {},
+        "byline": {},
+        "multimedia": []
+      }
+    ]
+  }
+}

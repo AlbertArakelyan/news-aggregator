@@ -106,8 +106,17 @@ Each adapter does two mappings: internal `ArticleQuery` → its provider's query
 
    Multi-selection (sources, categories, authors) is done with `Checkbox` groups rather than a `multiple` `<select>`, which is poor UX on both desktop and mobile. `Select` is a styled *native* `<select>`: keyboard navigation, type-ahead, and the mobile OS picker come free, and none of it is worth reimplementing as a custom listbox.
 
-3. **Types + adapters + aggregator** with the `/api/articles` route — pure functions, no UI. Testable in isolation.
-4. **Feed UI**: article card, list, loading/empty/error states, responsive layout — composed from the step-2 primitives, adding no new raw Tailwind beyond layout. Replaces the `Hello world` placeholder at `pages/index.tsx`.
+3. **Types + adapters + aggregator — DONE.** `lib/sources/*` (Guardian, NYT, NewsAPI), `lib/aggregator.ts`, `lib/query.ts`, `pages/api/articles.ts`.
+
+   `buildUrl` and `parse` are pure; the aggregator owns every network call. That is what lets **34 tests** run against recorded fixtures in ~200ms with no API keys. `NEWS_FIXTURES=1` runs the whole app the same way.
+
+   Verified against the live APIs: with one source given a bad key, that source reports 401 while the other two still return articles and the page names the one that failed — degraded, not emptied.
+
+4. **Feed UI — DONE.** `components/feed/` (`ArticleCard`, `ArticleList`, `SourceStatus`) composed from the step-2 primitives, server-rendered at `/` through `getServerSideProps`.
+
+   **All provider calls are server-side.** `getServerSideProps` calls `aggregate` directly rather than fetching our own API route — the Next docs are explicit that GSSP should call the data source itself. Confirmed the client bundle contains no key names, no key params, and none of the provider endpoints.
+
+   `getStaticProps` / `getStaticPaths` are not usable for this feed: it depends on a per-request query string. They would suit a future unfiltered "top headlines" page or per-category routes.
 
    The component gallery at **`pages/ui.tsx`** stays alongside it as a Storybook stand-in and must be updated whenever a primitive changes. Delete it before final delivery.
 

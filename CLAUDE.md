@@ -4,6 +4,46 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 @AGENTS.md
 
+## The bar this code is held to — check twice, every feature
+
+The brief grades this explicitly:
+
+> Incorporate best practices of software development such as **DRY** (Don't Repeat Yourself), **KISS** (Keep It Simple, Stupid), and **SOLID** (Single responsibility, Open-closed, Liskov substitution, Interface segregation, Dependency inversion) into your code.
+
+This is not a closing formality. Run it **twice on every feature**:
+
+1. **Before writing code** — decide where the logic belongs, what already exists that you should be reusing, and what the smallest thing that works actually is. Most violations are designed in, not typed in.
+2. **After it works** — re-read the diff against the checklist below and *fix what it surfaces*. "It works" is when the review starts, not when it ends.
+
+A feature is not done until the second pass is done.
+
+### What each principle means *here* — concretely
+
+**DRY.** A Tailwind class string is written **once**, in a primitive. If a feature component is writing `bg-*`, `border-*` or `rounded-*`, a primitive is missing a variant — add it there. Provider quirks are normalized **once**, in an adapter; nothing downstream re-parses a date or strips HTML. The query string is parsed **once**, in `lib/query.ts`, because SSR and the client-side refetch must read a shared link identically.
+
+But: **duplication is cheaper than the wrong abstraction.** Two things that merely look alike are not a repetition. Only unify what changes together, for the same reason.
+
+**KISS.** The bar for adding a dependency, a layer, or an abstraction is that the simple version has actually failed — not that it might. This codebase has said no to `clsx`/`tailwind-merge`/`cva` (plain template literals and `Record` maps do the job), to a custom listbox (a native `<select>` gives keyboard nav, type-ahead and the mobile picker for free), and to a portal in `Drawer` (nothing needs one yet). Prefer deleting code to adding a flag.
+
+**SOLID** — the two letters that carry real weight in this codebase:
+
+- **Single responsibility.** `buildUrl` and `parse` are pure; the aggregator owns *all* IO. That split is exactly why the adapters are testable against fixtures with no keys. Primitives are presentational and stateless — a component that reads state (`ThemeToggle`) is a feature component, not a primitive.
+- **Open-closed + dependency inversion.** **Adding a fourth news source must be one new file plus one line in `registry.ts`.** If it forces an edit to the aggregator, the API route, or any component, the abstraction has leaked — fix the abstraction, not the caller. The feed depends on the `NewsSource` interface, never on a provider.
+- **Interface segregation.** `SourceCapabilities` exists so an adapter declares only what its API *genuinely* does. Lying there makes a filter silently do nothing while the UI still looks like it worked — the worst failure mode available.
+- **Liskov.** Any `NewsSource` must be substitutable for any other. An adapter that throws where others return `[]`, or returns provider-shaped data, breaks the fan-out.
+
+### The end-of-feature pass
+
+Before calling a feature done, answer these — and act on the answers:
+
+- Did I re-implement something that exists? (a primitive, a `lib/` helper, a token)
+- Did I put logic in a component that belongs in `lib/`, or in a page that belongs in a component?
+- Would a **fourth source / a fifth primitive / a new filter** still be a one-file change?
+- Is anything here simpler if I delete it? Any flag, layer or option nobody asked for?
+- Is every new class a semantic token, and is every new module single-purpose?
+
+Then run `/check` (it ends with this same pass) and, for component work, the `ui-conformance` subagent.
+
 ## Project setup for Claude Code
 
 Rules are **scoped**: each folder carries the rules for its own module, loaded automatically when you work in it. This file holds only what is cross-cutting.

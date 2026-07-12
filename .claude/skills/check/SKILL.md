@@ -54,6 +54,18 @@ docker compose down
 
 The dev profile is separate: `docker compose --profile dev up dev`, torn down with `docker compose --profile dev down -v` (the `-v` matters — it drops the anonymous volumes).
 
-## 5. Report honestly
+## 5. The DRY / KISS / SOLID pass — the one the brief grades
+
+**Not optional, and not a formality.** Re-read the diff and act on what it surfaces. Working code is where this review starts, not where it ends.
+
+- **DRY** — Did I rewrite something that exists? A Tailwind class string belongs in a primitive, written once. A provider quirk is normalized once, in its adapter. The query string is parsed once, in `lib/query.ts`. (But two things that merely *look* alike are not duplication — only unify what changes together.)
+- **KISS** — Is anything here simpler if I delete it? Any dependency, flag, layer or option that nobody asked for and no failure demanded?
+- **Single responsibility** — Is logic sitting in a component that belongs in `lib/`? Is a "primitive" holding state? (Then it is a feature component.)
+- **Open-closed / dependency inversion** — Would a **fourth news source still be one new file plus one line in `registry.ts`**? Would a fifth primitive, or a new filter, still be a one-file change? If not, the abstraction leaked — fix the abstraction, not the caller.
+- **Interface segregation** — Does every `SourceCapabilities` flag state what the API *genuinely* does? A lie there makes a filter silently do nothing while the UI looks fine.
+
+Fix what this turns up **before** reporting the feature as done. For component work, also run the `ui-conformance` subagent.
+
+## 6. Report honestly
 
 Say what you ran and what it returned. If something failed, say so with the output. Never describe a change as verified because it compiled.

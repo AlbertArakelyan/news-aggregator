@@ -1,6 +1,6 @@
 # News Aggregator
 
-The user interface for a news aggregator that pulls articles from several news APIs and presents them in a clean, easy-to-read feed. Built as the innoscripta Frontend Developer case study; the brief is `CS_Frontend Developer_2025.pdf` in this repo.
+The user interface for a news aggregator that pulls articles from several news APIs and presents them in a clean, easy-to-read feed. Built as the innoscripta Frontend Developer case study.
 
 Features, per the brief — all implemented:
 

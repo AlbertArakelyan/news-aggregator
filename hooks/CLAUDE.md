@@ -17,7 +17,7 @@ The server cannot know what is in `localStorage` or what the OS theme is. Read t
 const theme = useSyncExternalStore(subscribe, getClientSnapshot, () => DEFAULT);
 ```
 
-Apply this to the personalized-feed preferences (step 6 of `PLAN.md`) — same problem, same solution.
+`usePreferences` does exactly the same for the personalized feed's saved preferences — same problem, same solution.
 
 ## Adjusting state during render: the reference must be stable
 

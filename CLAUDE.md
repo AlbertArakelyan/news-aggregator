@@ -138,13 +138,11 @@ An interview take-home: the UI for a **news aggregator** that pulls articles fro
 - Must be **containerized with Docker**, with docs on running it in a container — done, see the Docker section above.
 - Graded on DRY / KISS / SOLID, so favor small, single-responsibility modules over one large fetch-and-render component.
 
-`PLAN.md` at the repo root holds the agreed build plan (UI library → adapters → feed → filters → personalized feed). Read it before starting feature work.
-
 ## State of the codebase
 
-Done (`PLAN.md` steps 1–5): Docker, the README, the design system, the ten UI primitives, the three source adapters + aggregator, a server-rendered feed at `/`, and search + filtering (keyword, date range, category, source).
+**Complete.** Every requirement in the brief is built: keyword search with date/category/source filters, a personalized feed (preferred sources, categories, authors), a mobile-responsive layout, three normalized data sources, Docker with docs, and DRY/KISS/SOLID enforced as a two-pass check on every feature. Plus infinite scroll with server-side pagination, and a light/dark/system theme.
 
-Not built: the **personalized feed** (step 6) — preferred sources, categories and authors — which is the last requirement from the brief. `pages/api/hello.ts` is still the create-next-app sample and is replaceable.
+The create-next-app leftovers (`pages/api/hello.ts`, the sample SVGs in `public/`) and the development-only component gallery (`pages/ui.tsx`) have all been deleted. What is here is what the app uses.
 
 ## Data flow
 

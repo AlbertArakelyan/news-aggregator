@@ -17,7 +17,13 @@ This split is why `dedupeByUrl` and `sortByNewest` live in `lib/articles.ts` rat
 Two rules that keep the boundary honest:
 
 - **`lib/query.ts` must never import `registry.ts`.** The filter UI imports `query.ts`. The canonical source-id list therefore lives in the import-free `lib/sources/types.ts`.
-- After any change here, check it: `grep -rlE "guardianapis|nytimes|newsapi|_API_KEY" .next/static/` must find nothing.
+- After any change here, check that the **provider endpoints** never reach the client:
+
+  ```bash
+  grep -rlE "guardianapis|api\.nytimes\.com|newsapi\.org" .next/static/   # must find nothing
+  ```
+
+  Do **not** grep for `_API_KEY`. The variable *names* are legitimately in the client bundle — `SourceStatus` names them when no source is configured, so the reader is told what to set. A name is not a secret; a **value** is. To check for values, compare the contents of `.env` against the chunks, not the identifiers.
 
 Never prefix a key `NEXT_PUBLIC_`. That inlines it into client JS at build time. Server-side keys stay runtime-only in `environment:` / `env_file`.
 

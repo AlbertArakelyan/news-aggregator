@@ -1,6 +1,6 @@
 ---
 name: docs-drift
-description: Checks the project's markdown (CLAUDE.md files, README, PLAN) against what the code actually does, and reports claims that have gone stale. Use before a commit that changed structure, after finishing a build step, or when asked whether the docs are still true.
+description: Checks the project's markdown (CLAUDE.md files, README, skills, agents) against what the code actually does, and reports claims that have gone stale. Use before a commit that changed structure, after finishing a build step, or when asked whether the docs are still true.
 tools: Read, Grep, Glob, Bash
 model: sonnet
 color: orange
@@ -17,7 +17,6 @@ This has already gone wrong twice: `CLAUDE.md` claimed "No `Dockerfile` exists y
 - `components/UI/CLAUDE.md` — the pattern, the token table
 - any other nested `CLAUDE.md` (`components/`, `hooks/`, `lib/`, `lib/sources/`, `pages/`, `styles/`)
 - `README.md` — stack versions, commands, Docker instructions
-- `PLAN.md` — build order and which steps are done
 - `.claude/skills/*/SKILL.md`, `.claude/agents/*.md`
 
 ## What to verify
@@ -32,7 +31,7 @@ Not the `^` ranges in `package.json` — the resolved versions.
 
 **Every path must exist.** Grep the docs for file paths and confirm each one is real. A doc that points at a moved or deleted file is actively misleading.
 
-**Every "done"/"not built" claim must be true.** `PLAN.md` marks steps DONE; verify the code for that step exists. `CLAUDE.md`'s "state of the codebase" is the single most drift-prone paragraph in the repo.
+**Every "done"/"not built" claim must be true.** `CLAUDE.md`'s "state of the codebase" is the single most drift-prone paragraph in the repo — it has been wrong twice.
 
 **Every token in the `components/UI/CLAUDE.md` table must exist** in `styles/base.css` + the `@theme inline` block of `styles/globals.css` — and every token defined there should be in the table.
 

@@ -12,7 +12,6 @@ Filenames are **lowercase** — the router derives URLs from them, so `pages/Ind
 | `api/articles.ts` | The aggregator over HTTP. **Only infinite scroll calls it**, to append page 2 and beyond — page is scroll state, not URL state. Doubles as the inspection surface for verifying an adapter without the UI in the way. |
 | `_app.tsx` | Geist font variables + the app-wide shell. Fonts live here, not per-page, so the variables are in scope for every route. |
 | `_document.tsx` | Carries the blocking theme script. |
-| `api/hello.ts` | create-next-app sample. Replaceable. |
 
 ## `_document.tsx` — do not "tidy" the inline script
 

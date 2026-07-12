@@ -51,12 +51,42 @@ An interview take-home: the UI for a **news aggregator** that pulls articles fro
 - **Personalized feed** — users pick preferred sources, categories, and authors.
 - **Mobile-responsive** design.
 - Fetch from **at least 3** of the listed data sources (NewsAPI, OpenNews, NewsCred, The Guardian, New York Times, BBC News, NewsAPI.org). Each has a different response shape, so expect an adapter/normalization layer that maps every source onto one internal `Article` type — that is the main architectural decision in this codebase.
-- Must be **containerized with Docker**, with docs on running it in a container. No `Dockerfile` exists yet.
+- Must be **containerized with Docker**, with docs on running it in a container — done, see the Docker section above.
 - Graded on DRY / KISS / SOLID, so favor small, single-responsibility modules over one large fetch-and-render component.
+
+`PLAN.md` at the repo root holds the agreed build plan (UI library → adapters → feed → filters → personalized feed). Read it before starting feature work.
 
 ## State of the codebase
 
-Still the unmodified `create-next-app` scaffold — `pages/index.tsx` is the Vercel splash page, `pages/api/hello.ts` is the sample handler, and `public/` holds the default SVGs. None of the news-aggregator features are built. Treat all of it as replaceable.
+Docker, the README, and `PLAN.md` are done. The application itself is still the unmodified `create-next-app` scaffold — `pages/index.tsx` is the Vercel splash page, `pages/api/hello.ts` is the sample handler, and `public/` holds the default SVGs. None of the news-aggregator features are built. Treat all of that as replaceable.
+
+## Naming conventions
+
+**Any file that contains a React component is `PascalCase` and named after the component it exports** — `Button.tsx`, `ArticleCard.tsx`, `EmptyState.tsx`. One component per file, and the filename matches the export.
+
+Everything else stays lowercase: hooks (`useArticles.ts` — camelCase, named after the hook), plain modules (`cn.ts`, `aggregator.ts`, `guardian.ts`), and types (`types.ts`), because none of them export a component.
+
+Directories are lowercase (`components/feed/`, `lib/sources/`) with one exception: **`components/UI/`** is capitalized, because UI is an acronym and is always written that way.
+
+```
+components/UI/Button.tsx        component      -> PascalCase
+components/feed/ArticleCard.tsx component      -> PascalCase, lowercase folder
+hooks/useArticles.ts            hook           -> camelCase
+lib/sources/guardian.ts         plain module   -> lowercase
+```
+
+Note that `pages/` is exempt — the Pages Router derives URLs from filenames, so those stay lowercase (`pages/index.tsx`, `pages/api/articles.ts`) even though they export components.
+
+### Never write a barrel `index.ts`
+
+**Do not create re-export barrel files** — no `components/UI/index.ts`, no `lib/sources/index.ts`, none anywhere. Import from the defining module directly:
+
+```ts
+import { Button } from "@/components/UI/Button";   // yes
+import { Button } from "@/components/UI";          // no — no barrel exists
+```
+
+Barrels are pure indirection: they add a file to keep in sync on every rename, hide where a symbol actually lives, defeat "go to definition" jumping straight to the source, and make one import pull the whole folder into the module graph — which wrecks tree-shaking and slows cold builds. The only thing they buy is slightly shorter import lines, and the `@/*` alias already gives us that. If you find one, delete it and rewrite the imports.
 
 ## Stack notes that bite
 

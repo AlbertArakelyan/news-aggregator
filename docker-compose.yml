@@ -1,4 +1,5 @@
 services:
+  # Default: production build. `docker compose up`
   web:
     build:
       context: .
@@ -8,3 +9,21 @@ services:
     environment:
       NODE_ENV: production
     restart: unless-stopped
+
+  # Opt-in hot-reload dev server. `docker compose --profile dev up dev`
+  dev:
+    profiles: ["dev"]
+    build:
+      context: .
+      target: dev
+    ports:
+      - "3000:3000"
+    volumes:
+      # Source is bind-mounted so edits on the host hot-reload in the container.
+      - .:/app
+      # Anonymous volumes keep the image's node_modules and the container's
+      # build output from being shadowed by (or written back to) the host.
+      - /app/node_modules
+      - /app/.next
+    environment:
+      NODE_ENV: development

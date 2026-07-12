@@ -23,11 +23,20 @@ There is no test runner configured yet. If tests are added, wire the script into
 ## Docker
 
 ```bash
-docker compose up --build     # http://localhost:3000
-docker compose down
+docker compose up --build             # production build, http://localhost:3000
+docker compose --profile dev up dev   # hot-reload dev server, same port
+docker compose down -v                # -v also drops the dev anonymous volumes
 ```
 
-`Dockerfile` is a multi-stage build (`deps` → `builder` → `runner`) and `docker-compose.yml` runs the `runner` stage. The runtime image carries no `node_modules`: `next.config.ts` sets `output: "standalone"`, so `next build` emits `.next/standalone` with a self-contained `server.js`, and the runner stage copies that plus `.next/static` and `public/`. It runs as the non-root `nextjs` user and the container listens on `0.0.0.0:3000` via `HOSTNAME`/`PORT`.
+`Dockerfile` is a multi-stage build (`deps` → `dev` | `builder` → `runner`). Compose has two services: `web` (the `runner` stage, the default — a bare `docker compose up` starts only this) and `dev` (the `dev` stage, gated behind the `dev` profile so it never starts by accident).
+
+The **production** image carries no `node_modules`: `next.config.ts` sets `output: "standalone"`, so `next build` emits `.next/standalone` with a self-contained `server.js`, and the runner stage copies that plus `.next/static` and `public/`. It runs as the non-root `nextjs` user and listens on `0.0.0.0:3000` via `HOSTNAME`/`PORT`.
+
+The **dev** service bind-mounts the repo over `/app` for hot reload, with anonymous volumes masking `/app/node_modules` and `/app/.next` so the container's dependencies and build output are not shadowed by (or written back over) the host's. Two non-obvious constraints hold it together:
+
+- It runs as the image's built-in `node` user, which is **uid 1000** — the same uid as a typical Linux host user. That is what keeps files the container writes through the bind mount owned by you rather than by root. If you change the user, or run on a host where your uid isn't 1000, expect root-owned droppings in the working tree.
+- `/app/.next` is created and chowned to `node` **in the image**, because an anonymous volume inherits its ownership from the image directory at creation time. If you edit that, `docker compose down -v` (not plain `down`) is required to drop the stale volume — otherwise the old ownership persists and the dev server fails to write.
+- `next dev` binds `0.0.0.0` by default in Next 16, so no `-H` flag is needed for the port mapping to work. Dev output also goes to `.next/dev` (not `.next`), so a container dev server and a host `next build` don't collide.
 
 Two consequences worth knowing before you change things:
 

@@ -11,6 +11,22 @@ FROM base AS deps
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 
+# Hot-reload dev server. Compose bind-mounts the source over /app, so the
+# COPY here only seeds the image for a bare `docker run`.
+# `next dev` already binds 0.0.0.0 by default, so no -H flag is needed.
+FROM base AS dev
+ENV NODE_ENV=development
+COPY --from=deps --chown=node:node /app/node_modules ./node_modules
+COPY --chown=node:node . .
+# The image's built-in `node` user is uid 1000, matching a typical Linux host
+# user, so anything written back through the bind mount is owned by the host
+# user rather than root. .next must exist and be owned here: the anonymous
+# volume compose mounts over it inherits this ownership at creation.
+RUN mkdir -p /app/.next && chown node:node /app /app/.next
+USER node
+EXPOSE 3000
+CMD ["yarn", "dev"]
+
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .

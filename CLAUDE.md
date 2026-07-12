@@ -4,6 +4,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 @AGENTS.md
 
+## Project setup for Claude Code
+
+Rules are **scoped**: each folder carries the rules for its own module, loaded automatically when you work in it. This file holds only what is cross-cutting.
+
+| Scope | Rules |
+|---|---|
+| `components/CLAUDE.md` | primitive vs feature component; compose, don't re-style |
+| `components/UI/CLAUDE.md` | **the component pattern, non-negotiable** + the full token table |
+| `hooks/CLAUDE.md` | `useSyncExternalStore` for client-only state; never `setState` in an effect |
+| `lib/CLAUDE.md` | pure modules; which side of the server/client boundary each runs on |
+| `lib/sources/CLAUDE.md` | **the adapter contract** — the module this case study is graded on |
+| `pages/CLAUDE.md` | Pages Router (not App Router); API routes are the key boundary |
+| `styles/CLAUDE.md` | the two token layers; Tailwind v4 is CSS-first |
+
+**Skills** (`/name`, or Claude invokes them when relevant):
+
+- `/add-ui-primitive <Name>` — scaffold a primitive to the pattern, and add it to the gallery
+- `/add-news-source <name>` — add a provider adapter that normalizes onto `Article`
+- `/add-design-token` — add a color correctly: both files, plus the WCAG check
+- `/check` — verify for real: lint, build, boot, drive the routes, inspect the emitted CSS
+
+**Subagents:**
+
+- `ui-conformance` — audits components against the rules above (token discipline, no `FC`, no barrels, silent Tailwind traps)
+- `docs-drift` — checks the markdown against what the code actually does. Docs here have gone stale twice; run it before committing a structural change.
+
+**A `PreToolUse` hook blocks two commands** (`.claude/hooks/guard-bash.sh`), because both are easy to run from muscle memory and expensive to undo:
+
+- **`npm`** — the lockfile is `yarn.lock`; an `npm install` would resolve a different tree.
+- **`git add -A` / `git add .` / `git commit -a`** — this repo is public and holds the employer's case-study PDF. Stage by explicit path.
+
 ## Commands
 
 **The package manager is yarn — Yarn Classic (v1). Never run `npm` in this repo, in a terminal or inside the Dockerfile.** `yarn.lock` is the committed lockfile and there is no `package-lock.json`; an `npm install` would silently ignore `yarn.lock` and resolve a different dependency tree. There is no `packageManager` field, so nothing enforces this but you.

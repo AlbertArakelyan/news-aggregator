@@ -6,6 +6,20 @@ services:
       target: runner
     ports:
       - "3000:3000"
+    # The API keys. Without this the container starts, serves a page, and shows
+    # "No articles found" — every adapter reports itself unconfigured, so no
+    # source is even queried. The image deliberately contains no .env
+    # (.dockerignore excludes it, so keys never get baked into a layer), which
+    # means they can only arrive here, at runtime.
+    #
+    # env_file rather than a list of `environment:` keys on purpose: adding a
+    # news source must stay one new adapter plus one line in registry.ts. If this
+    # file enumerated every key, a new source would also force a compose edit.
+    #
+    # required: false — the app still runs with NEWS_FIXTURES=1 and no keys.
+    env_file:
+      - path: .env
+        required: false
     environment:
       NODE_ENV: production
     restart: unless-stopped
@@ -25,5 +39,11 @@ services:
       # build output from being shadowed by (or written back to) the host.
       - /app/node_modules
       - /app/.next
+    # The bind mount above brings the host's .env into /app, which Next loads
+    # itself — but only for `next dev`. Passing it here too keeps the two
+    # services behaving the same way, and works even if the mount is changed.
+    env_file:
+      - path: .env
+        required: false
     environment:
       NODE_ENV: development

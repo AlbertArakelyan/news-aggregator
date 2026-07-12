@@ -38,6 +38,34 @@ yarn install --frozen-lockfile  # reproducible install (CI / Docker)
 
 `--frozen-lockfile` is the Yarn Classic flag. `--immutable` is Yarn Berry and will not work here.
 
+## API keys — do this first
+
+**Without keys the app starts, serves a page, and shows no articles.** Every source reports itself unconfigured, so none is queried. (The page says so explicitly rather than pretending there is no news.)
+
+```bash
+cp .env.example .env
+```
+
+Then put at least one key in `.env`. Each is free:
+
+| Variable | Get a key |
+|---|---|
+| `GUARDIAN_API_KEY` | <https://open-platform.theguardian.com/access/> |
+| `NYT_API_KEY` | <https://developer.nytimes.com/get-started> |
+| `NEWSAPI_KEY` | <https://newsapi.org/register> |
+
+Any subset works — a source with no key is skipped, not failed.
+
+`.env` is gitignored and is **never** baked into the Docker image; the keys are passed to the container at runtime. They are read server-side only (in `getServerSideProps` and `pages/api/*`), never prefixed `NEXT_PUBLIC_`, and never reach the browser.
+
+### No keys? Run on the recorded fixtures
+
+```bash
+NEWS_FIXTURES=1 yarn dev          # or set NEWS_FIXTURES=1 in .env
+```
+
+The whole app — SSR, filters, infinite scroll — runs against the sample responses in `lib/sources/__fixtures__/`, with no keys and no network.
+
 ## Running locally
 
 Requires Node.js 20+ and yarn 1.x.
@@ -57,10 +85,14 @@ Open <http://localhost:3000>. The page hot-reloads as you edit files.
 | `yarn build` | Production build |
 | `yarn start` | Serve the production build (run `yarn build` first) |
 | `yarn lint` | Run ESLint across the project |
+| `yarn test` | Run the test suite once (Vitest) |
+| `yarn test:watch` | Re-run tests on change |
 
 ## Running with Docker
 
 Requires Docker with the Compose plugin (`docker compose`, v2). Nothing else — you do **not** need Node or yarn installed on the host.
+
+**`.env` must exist first** (see [API keys](#api-keys--do-this-first)). Compose passes it into the container at runtime via `env_file`; the image itself contains no keys, because `.dockerignore` keeps `.env` out of the build context so nothing is ever baked into a layer. Without it the container runs but shows no articles.
 
 Two services are defined in `docker-compose.yml`:
 
@@ -126,6 +158,20 @@ docker compose down -v --rmi local
 ```
 
 ### Troubleshooting
+
+**The container runs but shows no articles.** It has no API keys. Create `.env` (`cp .env.example .env`) and put at least one key in it, then `docker compose up --build`. Compose reads `.env` through `env_file`; the image deliberately contains none. Confirm the keys arrived:
+
+```bash
+docker compose exec web sh -c 'echo "${GUARDIAN_API_KEY:-EMPTY}"'
+```
+
+To run with no keys at all, set `NEWS_FIXTURES=1` in `.env` and the app serves the recorded fixtures.
+
+**A `docker compose run` container is still holding port 3000.** `docker compose down` does not remove one-off `run` containers. Clear them:
+
+```bash
+docker ps -aq --filter "name=news-aggregator" | xargs -r docker rm -f
+```
 
 **Port 3000 already in use.** Something else (often a local `yarn dev`, or the other compose service) holds the port. Stop it, or remap the host side in `docker-compose.yml` — e.g. `"3001:3000"` to serve on <http://localhost:3001>.
 

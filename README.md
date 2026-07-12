@@ -28,7 +28,10 @@ Of the seven sources the brief lists, only three are usable today: **OpenNews** 
 
 This project uses **yarn**, and `yarn.lock` is the committed lockfile. There is no `package-lock.json`.
 
-> ⚠️ **Do not run `npm install`.** It ignores `yarn.lock`, resolves a different dependency tree, and writes a competing `package-lock.json`. Use `yarn` for everything:
+> [!WARNING]
+> **Do not run `npm install`.** It ignores `yarn.lock`, resolves a different dependency tree, and writes a competing `package-lock.json`.
+
+Use `yarn` for everything:
 
 ```bash
 yarn install                  # install dependencies

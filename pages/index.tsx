@@ -23,7 +23,16 @@ interface FeedProps extends AggregateResult {
   sourceOptions: ISourceOption[];
 }
 
-export default function Feed({ sourceOptions, ...initial }: FeedProps) {
+// Props are destructured field by field, never with a rest-spread. A spread would
+// build a new object on every render, and the reset check inside
+// useInfiniteArticles compares references — it would never match, and the page
+// would re-render forever.
+export default function Feed({
+  articles: initialArticles,
+  hasMore: initialHasMore,
+  sources,
+  sourceOptions,
+}: FeedProps) {
   const { filters, isActive, setFilters, clearFilters } = useArticleFilters();
   const { preferences } = usePreferences();
   const isLoading = useRouteLoading();
@@ -33,12 +42,10 @@ export default function Feed({ sourceOptions, ...initial }: FeedProps) {
   // link. An explicit filter in the URL always outranks a stored default.
   usePersonalizedDefaults(preferences, filters);
 
-  // Page 1 is the server-rendered `initial`; this appends the rest, resetting
-  // whenever the filters change and getServerSideProps hands down new props.
+  // Page 1 is server-rendered; this appends the rest, resetting whenever the
+  // filters change and getServerSideProps hands down new props.
   const { articles, hasMore, isLoadingMore, error, loadMore, sentinelRef } =
-    useInfiniteArticles(initial, filters);
-
-  const { sources } = initial;
+    useInfiniteArticles(initialArticles, initialHasMore, filters);
 
   return (
     <>

@@ -100,6 +100,8 @@ yarn test:watch
 
 Vitest does not read `tsconfig.json`, so the `@/*` alias is re-declared in `vitest.config.ts`. Tests live in `__tests__/` beside the code they cover; fixtures in `__fixtures__/`.
 
+The default environment is **node** (the `lib/` logic is pure). A component or hook test opts into **jsdom** with `// @vitest-environment jsdom` at the top of the file. **Write one for any hook that adjusts state during render** — a render loop returns a clean 200 from the server and is invisible to `curl`; only a client render catches it. See `hooks/__tests__/useInfiniteArticles.test.tsx`, which exists because exactly that shipped.
+
 Set **`NEWS_FIXTURES=1`** to run the whole app against the recorded fixtures with no API keys at all.
 
 ## Docker

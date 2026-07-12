@@ -4,6 +4,7 @@ import { appendPage } from "@/lib/articles";
 import { toQueryParams } from "@/lib/query";
 import { AggregateResult, Article, ArticleQuery } from "@/lib/sources/types";
 
+
 import useOnScreen from "./useOnScreen";
 
 interface UseInfiniteArticlesResult {
@@ -29,25 +30,35 @@ interface UseInfiniteArticlesResult {
  * feed instead of leaving it.
  */
 export default function useInfiniteArticles(
-  initial: AggregateResult,
+  initialArticles: Article[],
+  initialHasMore: boolean,
   filters: ArticleQuery,
 ): UseInfiniteArticlesResult {
-  const [articles, setArticles] = useState<Article[]>(initial.articles);
-  const [hasMore, setHasMore] = useState(initial.hasMore);
+  const [articles, setArticles] = useState<Article[]>(initialArticles);
+  const [hasMore, setHasMore] = useState(initialHasMore);
   const [page, setPage] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // New props mean the filters changed and getServerSideProps re-ran: start the
   // list over. Adjusted during render rather than in an effect — an effect would
-  // trip react-hooks/set-state-in-effect, and would also append one stale page
-  // before resetting.
-  const [seed, setSeed] = useState(initial);
+  // trip react-hooks/set-state-in-effect, and would append one stale page before
+  // resetting.
+  //
+  // The seed MUST be a reference that is stable across re-renders and changes
+  // only on new props. `initialArticles` is exactly that: it arrives on the props
+  // object, which React keeps identical until the page receives new props.
+  //
+  // Taking an object here instead (`initial: AggregateResult`) caused a render
+  // loop: the caller built it with a rest-spread, so it was a fresh object every
+  // render, the comparison below never matched, and setState-during-render ran
+  // forever. Pass the array, not a synthesized object.
+  const [seed, setSeed] = useState(initialArticles);
 
-  if (seed !== initial) {
-    setSeed(initial);
-    setArticles(initial.articles);
-    setHasMore(initial.hasMore);
+  if (seed !== initialArticles) {
+    setSeed(initialArticles);
+    setArticles(initialArticles);
+    setHasMore(initialHasMore);
     setPage(1);
     setError(null);
   }

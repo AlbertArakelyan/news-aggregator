@@ -35,7 +35,21 @@ pkill -f "next start"
 curl -s -o /dev/null --max-time 2 http://localhost:3000 && echo "STILL SERVING" || echo "port free"
 ```
 
-## 3. Check what the build actually emitted
+## 3. If you touched a component or a hook, the HTML proves nothing
+
+**A curl of the server HTML cannot see a client-side bug.** SSR renders once and succeeds; hydration, effects, and re-renders all happen afterwards. A render loop, a hydration mismatch, a broken event handler — all of them return a clean 200 and a perfect-looking page source.
+
+This has already shipped once: a rest-spread in `pages/index.tsx` handed `useInfiniteArticles` a fresh object every render, the reset comparison never matched, and React bailed out with "Too many re-renders". Lint passed. Build passed. `curl` returned 200 with the full feed in it. The app was broken in the browser.
+
+So for any change to a component or hook:
+
+```bash
+yarn test    # component/hook tests run in jsdom and DO catch this
+```
+
+If the thing you changed has no test that renders it **and re-renders it**, write one (see `hooks/__tests__/useInfiniteArticles.test.tsx`). Any hook that adjusts state during render, or resets on new props, needs one.
+
+## 4. Check what the build actually emitted
 
 For anything styling-related, confirm the class exists in the compiled CSS — Tailwind scans source as text, so a constructed class name is silently dropped:
 
@@ -46,7 +60,7 @@ grep -o "\.bg-surface\b" "$CSS"
 
 Variant-prefixed utilities are escaped in the output (`.hover\:bg-primary:hover`), so grep the escaped form or you will get a false "missing".
 
-## 4. Docker, if the container or its config changed
+## 5. Docker, if the container or its config changed
 
 ```bash
 docker compose up --build -d
@@ -56,7 +70,7 @@ docker compose down
 
 The dev profile is separate: `docker compose --profile dev up dev`, torn down with `docker compose --profile dev down -v` (the `-v` matters — it drops the anonymous volumes).
 
-## 5. The DRY / KISS / SOLID pass — the one the brief grades
+## 6. The DRY / KISS / SOLID pass — the one the brief grades
 
 **Not optional, and not a formality.** Re-read the diff and act on what it surfaces. Working code is where this review starts, not where it ends.
 
@@ -68,6 +82,6 @@ The dev profile is separate: `docker compose --profile dev up dev`, torn down wi
 
 Fix what this turns up **before** reporting the feature as done. For component work, also run the `ui-conformance` subagent.
 
-## 6. Report honestly
+## 7. Report honestly
 
 Say what you ran and what it returned. If something failed, say so with the output. Never describe a change as verified because it compiled.

@@ -65,7 +65,7 @@ Each adapter does two mappings: internal `ArticleQuery` → its provider's query
    - **No hydration mismatch.** The server cannot know the theme, so `useTheme` reads localStorage and matchMedia through `useSyncExternalStore` — which hydrates from a server snapshot and then re-renders with the real value. That is why there is no `isMounted` flag and no `setState` in an effect.
    - **Accessible.** Every text/background pair was contrast-checked; all 22 meet WCAG AA in both themes. `--neutral-450` exists solely because the obvious choice (`--neutral-400`) gave light-theme `subtle-text` only 2.48:1.
 
-2. **UI primitives** — the presentational components every later step composes, so no feature invents its own button.
+2. **UI primitives — DONE.** The presentational components every later step composes, so no feature invents its own button.
 
    Structure follows the sibling **Lumark** project (`../Lumark/src/components/UI/`), which is the reference implementation. **One folder per component**, holding the component and its types:
 
@@ -84,9 +84,9 @@ Each adapter does two mappings: internal `ArticleQuery` → its provider's query
 
    The pattern each component must follow, matching Lumark:
 
-   - **`export default`** the component, typed `FC<I<Name>Props>`. Import it directly — `import Button from "@/components/UI/Button/Button"`. No barrel `index.ts` anywhere.
+   - **`export default`** the component. **No `FC<…>`** — type the destructured parameter directly. Import it directly too: `import Button from "@/components/UI/Button/Button"`. No barrel `index.ts` anywhere.
    - **`types.ts`** exports `I<Name>Props` (capital `I` prefix) plus the string-literal unions the component exposes — `ButtonVariantType`, `ButtonSizeType`, `ButtonRoundedType`, and so on.
-   - **`I<Name>Props` extends the native HTML attributes of the root element** (`ButtonHTMLAttributes<HTMLButtonElement>`, `InputHTMLAttributes<HTMLInputElement>`, `HTMLAttributes<HTMLDivElement>` …), and `PropsWithChildren` only when the component actually renders children.
+   - **`I<Name>Props` extends the native HTML attributes of the root element** (`ButtonHTMLAttributes<HTMLButtonElement>`, `InputHTMLAttributes<HTMLInputElement>`, `HTMLAttributes<HTMLDivElement>` …) — and *only* those. `children` never goes in the interface: a component that renders children is typed `PropsWithChildren<IButtonProps>` at the signature. Any native prop being redefined must be `Omit`ted (`title` is `string` on `HTMLAttributes`, not `ReactNode`).
    - **`{...rest}` spreads onto the root element**, or onto the most semantically important element when the component wraps its root — `Input` spreads onto the inner `<input>`, since that is what callers configure.
    - **Variants are `Record<UnionType, string>` maps inside `useMemo`**, with a fallback to the default: `return sizeMapping[size] || sizeMapping.md;`.
    - **Extra `*ClassName` props** — one per meaningful structural layer (`wrapperClassName`, `labelClassName`, `buttonContentClassName`), while the plain `className` is reserved for the root element so it composes with `{...rest}`.
@@ -100,7 +100,11 @@ Each adapter does two mappings: internal `ArticleQuery` → its provider's query
 
    This is the DRY half of the rubric made visible: Tailwind class strings are written **once**, in a primitive, and every feature composes them. Each primitive is presentational and stateless — single responsibility, no data fetching, no business logic.
 
-   The first primitive to build is `ThemeToggle` — the temporary preview page in `pages/index.tsx` currently hand-rolls one from a raw `<button>`, and it should be replaced by `Button` + a proper toggle.
+   `lucide-react` is the only icon library (Lumark's choice). It is the sole dependency the UI library added.
+
+   `ThemeToggle` deliberately lives in `components/theme/`, **not** in `components/UI/` — it reads and writes theme state, and primitives are presentational and stateless by rule. It composes `Button`.
+
+   Multi-selection (sources, categories, authors) is done with `Checkbox` groups rather than a `multiple` `<select>`, which is poor UX on both desktop and mobile. `Select` is a styled *native* `<select>`: keyboard navigation, type-ahead, and the mobile OS picker come free, and none of it is worth reimplementing as a custom listbox.
 
 3. **Types + adapters + aggregator** with the `/api/articles` route — pure functions, no UI. Testable in isolation.
 4. **Feed UI**: article card, list, loading/empty/error states, responsive layout — composed from the step-2 primitives, adding no new raw Tailwind beyond layout. Replaces the temporary design-system preview at `pages/index.tsx`.

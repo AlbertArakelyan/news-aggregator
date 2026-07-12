@@ -36,8 +36,12 @@
   --neutral-950: #100f0e;
 
   /* ===== Raw: status hues (light / dark pairs) ===== */
-  --red-500: #dc2626;
+  --red-200: #fecaca;
+  --red-300: #fca5a5;
   --red-400: #ef4444;
+  --red-500: #dc2626;
+  --red-600: #b91c1c;
+  --red-700: #991b1b;
   --green-600: #15803d;
   --green-500: #22c55e;
   --amber-600: #b45309;
@@ -79,8 +83,10 @@
   --ghost-hover: color-mix(in srgb, var(--muted-text) 10%, transparent);
   --ghost-active: color-mix(in srgb, var(--muted-text) 18%, transparent);
 
-  /* status */
+  /* status — danger carries hover/active because it is also a button variant */
   --danger: var(--red-500);
+  --danger-hover: var(--red-600);
+  --danger-active: var(--red-700);
   --danger-foreground: var(--neutral-0);
   --danger-bg: color-mix(in srgb, var(--danger) 10%, transparent);
 
@@ -130,8 +136,11 @@
   --secondary-active: var(--neutral-600);
   --secondary-foreground: var(--neutral-100);
 
-  /* status — brighter hues so they hold up on a dark canvas */
+  /* status — brighter hues so they hold up on a dark canvas.
+     hover/active go *lighter* here, the inverse of the light theme. */
   --danger: var(--red-400);
+  --danger-hover: var(--red-300);
+  --danger-active: var(--red-200);
   --danger-foreground: var(--neutral-950);
 
   --success: var(--green-500);

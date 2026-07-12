@@ -43,6 +43,8 @@
   --color-ghost-active: var(--ghost-active);
 
   --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-danger-active: var(--danger-active);
   --color-danger-foreground: var(--danger-foreground);
   --color-danger-bg: var(--danger-bg);
 

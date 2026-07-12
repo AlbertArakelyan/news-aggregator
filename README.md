@@ -12,6 +12,16 @@ Features, per the brief — all implemented:
 
 Of the seven sources the brief lists, only three are usable today: **OpenNews** is a journalism nonprofit rather than an API, **NewsCred** withdrew public access, and **BBC News** has no public API (it is available *inside* NewsAPI). "NewsAPI" and "NewsAPI.org" are the same service, listed twice. So the three above are the three that exist.
 
+## Contents
+
+- [Tech stack](#tech-stack)
+- [Installation](#installation)
+- [API keys — do this first](#api-keys--do-this-first)
+- [Running locally](#running-locally)
+- [Running with Docker](#running-with-docker)
+- [How the Docker setup works](#how-the-docker-setup-works)
+- [Project structure](#project-structure)
+
 ## Tech stack
 
 | | Version | Notes |

@@ -1,15 +1,38 @@
 # News Aggregator
 
+> [!WARNING]
+> **This repo ships only `.env.example`. There is no `.env`, and no API keys — you must supply your own.**
+>
+> `.env` is gitignored (the keys are secrets, and this repository is public), so a fresh clone has none. Without them the app still builds and serves a page, but **every source reports itself unconfigured, nothing is queried, and the feed is empty**. The page tells you so rather than pretending there is no news.
+>
+> ```bash
+> cp .env.example .env
+> ```
+>
+> Then open `.env` and fill in the values, **keeping the variable names exactly as they appear in `.env.example`** — the adapters read them by name. At least one key is needed; each is free.
+>
+> | Variable | What it is | Where to get it |
+> |---|---|---|
+> | `GUARDIAN_API_KEY` | The Guardian's Open Platform. Backs keyword search, date range and category (their `section`) filtering. | Request a free developer key at <https://open-platform.theguardian.com/access/> — it is emailed to you, usually within a minute. |
+> | `NYT_API_KEY` | The New York Times **Article Search** API. Backs keyword search, date range and category (their `section.name`) filtering. | Sign in at <https://developer.nytimes.com/get-started>, create an app, enable the **Article Search API** for it, and copy the app's **API key**. NYT also shows an *API secret* — it is **not** used here: Article Search authenticates with the key alone, so there is no `NYT_SECRET_API_KEY` to set. |
+> | `NEWSAPI_KEY` | NewsAPI.org. Backs keyword search and date range. It has no category on the endpoint used, so category is filtered in memory instead. | Register at <https://newsapi.org/register> for a free key. The free tier is **development-only**: it rejects browser-origin requests (harmless here — every call is made server-side) and caps results at 100, so deep infinite-scroll pages will drop this source while the others keep going. |
+> | `NEWS_FIXTURES` | Optional escape hatch. Set to `1` to serve the recorded sample responses in `lib/sources/__fixtures__/` instead of calling the providers. | Nothing to obtain — it lets you run the whole app, including filters and infinite scroll, **with no keys and no network**. |
+>
+> **A missing key is skipped, not fatal.** Set one, two, or all three: a source without a key is simply not queried, and the rest of the feed works.
+>
+> Keys are read **server-side only** — in `getServerSideProps` and `pages/api/*` — and are deliberately never prefixed `NEXT_PUBLIC_`, which would inline them into the browser bundle. They are also never baked into the Docker image; Compose passes `.env` in at runtime.
+
 The user interface for a news aggregator that pulls articles from several news APIs and presents them in a clean, easy-to-read feed. Built as the innoscripta Frontend Developer case study; the brief is `CS_Frontend Developer_2025.pdf` in this repo.
 
-Target features, per the brief:
+Features, per the brief — all implemented:
 
-- **Search and filtering** — search articles by keyword, filter results by date, category, and source.
-- **Personalized feed** — choose preferred sources, categories, and authors.
-- **Mobile-responsive** layout.
-- Articles fetched from **at least three** of the permitted data sources (NewsAPI, OpenNews, NewsCred, The Guardian, New York Times, BBC News, NewsAPI.org).
+- **Search and filtering** — keyword search, plus date range, category and source filters. Filter state lives in the URL, so a filtered feed is a shareable, server-rendered link and the back button works.
+- **Personalized feed** — preferred sources, categories and authors, saved locally and applied as your default filters.
+- **Mobile-responsive** layout — filters collapse into a drawer.
+- **Three data sources** — The Guardian, the New York Times, and NewsAPI — each normalized onto one internal `Article` type.
+- Plus **infinite scroll** with server-side pagination, and a light/dark/system theme.
 
-> **Status:** project scaffolding and Docker setup are in place; the aggregator features above are not implemented yet.
+Of the seven sources the brief lists, only three are usable today: **OpenNews** is a journalism nonprofit rather than an API, **NewsCred** withdrew public access, and **BBC News** has no public API (it is available *inside* NewsAPI). "NewsAPI" and "NewsAPI.org" are the same service, listed twice. So the three above are the three that exist.
 
 ## Tech stack
 
@@ -40,31 +63,13 @@ yarn install --frozen-lockfile  # reproducible install (CI / Docker)
 
 ## API keys — do this first
 
-**Without keys the app starts, serves a page, and shows no articles.** Every source reports itself unconfigured, so none is queried. (The page says so explicitly rather than pretending there is no news.)
+`cp .env.example .env`, then fill it in. **See the warning at the top** for what each variable is and where to get it.
 
-```bash
-cp .env.example .env
-```
-
-Then put at least one key in `.env`. Each is free:
-
-| Variable | Get a key |
-|---|---|
-| `GUARDIAN_API_KEY` | <https://open-platform.theguardian.com/access/> |
-| `NYT_API_KEY` | <https://developer.nytimes.com/get-started> |
-| `NEWSAPI_KEY` | <https://newsapi.org/register> |
-
-Any subset works — a source with no key is skipped, not failed.
-
-`.env` is gitignored and is **never** baked into the Docker image; the keys are passed to the container at runtime. They are read server-side only (in `getServerSideProps` and `pages/api/*`), never prefixed `NEXT_PUBLIC_`, and never reach the browser.
-
-### No keys? Run on the recorded fixtures
+No keys, or a spent rate limit? Run against the recorded fixtures instead — the whole app works, offline:
 
 ```bash
 NEWS_FIXTURES=1 yarn dev          # or set NEWS_FIXTURES=1 in .env
 ```
-
-The whole app — SSR, filters, infinite scroll — runs against the sample responses in `lib/sources/__fixtures__/`, with no keys and no network.
 
 ## Running locally
 
@@ -195,15 +200,23 @@ The production image ships **without** `node_modules`. `next.config.ts` sets `ou
 ## Project structure
 
 ```
-pages/            Routes (Pages Router). pages/api/* are API routes served at /api/*
-styles/           Global CSS; the Tailwind v4 theme lives in globals.css
-public/           Static assets, served from /
-next.config.ts    Next.js config (standalone output, React strict mode)
-Dockerfile        Multi-stage build: deps -> dev | builder -> runner
-docker-compose.yml
+lib/sources/      One adapter per provider. buildUrl + parse are pure, so the
+                  aggregator owns all IO and the mappings test against fixtures.
+lib/aggregator.ts Fans out with Promise.allSettled, dedupes, sorts. One dead
+                  provider degrades the feed rather than emptying it.
+lib/query.ts      Both directions of the URL <-> filter contract, in one place.
+components/UI/    The in-house primitives (Button, Input, Drawer, ...).
+components/feed/  Article card, list, source status, load-more.
+components/filters/, components/preferences/
+hooks/            useTheme, useArticleFilters, useInfiniteArticles, ...
+pages/            Routes (Pages Router). pages/api/* are served at /api/*
+styles/           base.css holds the design tokens; globals.css maps them to Tailwind
 ```
 
-Two conventions worth knowing before adding code:
+The one architectural decision worth calling out: **every provider is normalized behind a `NewsSource` interface**, and each adapter declares what its API *genuinely* supports (`SourceCapabilities`). Whatever a provider cannot filter server-side, the aggregator filters in memory — so a filter behaves identically to the reader regardless of which source backs it. Adding a fourth source is one new file plus one line in `lib/sources/registry.ts`; nothing else changes.
+
+Three conventions worth knowing before adding code:
 
 - This is the **Pages Router**. There is no `app/` directory and no React Server Components — App Router idioms (`"use client"`, `app/layout.tsx`) do not apply.
-- **Tailwind v4 is configured in CSS**, not JavaScript. There is no `tailwind.config.js`; theme tokens are declared in the `@theme inline` block in `styles/globals.css`.
+- **Tailwind v4 is configured in CSS**, not JavaScript. There is no `tailwind.config.js`; theme tokens are declared in `styles/base.css` and mapped in the `@theme inline` block of `styles/globals.css`.
+- **API keys are server-side only.** Never import `lib/aggregator.ts` or `lib/sources/registry.ts` from a component — it would pull the provider endpoints and the key-reading code into the browser bundle.

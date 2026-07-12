@@ -97,11 +97,16 @@ describe("nyt", () => {
     expect(url.searchParams.get("end_date")).toBe("20260731");
   });
 
-  it("builds the fq filter-query syntax for a category", () => {
+  it("filters on section.name with a DOT, not the response's section_name", () => {
     vi.stubEnv("NYT_API_KEY", "k");
     const url = new URL(nyt.buildUrl({ category: "business" }));
 
-    expect(url.searchParams.get("fq")).toBe('section_name:("Business Day")');
+    // Regression test for a bug that failed *silently*: querying `section_name`
+    // (the spelling NYT uses in its responses) returns 200 with zero hits, so
+    // NYT vanished from every categorized feed and nothing reported an error.
+    // Confirmed against the live API.
+    expect(url.searchParams.get("fq")).toBe('section.name:("Business Day")');
+    expect(url.searchParams.get("fq")).not.toContain("section_name");
   });
 
   it("is zero-indexed on page, unlike the others", () => {

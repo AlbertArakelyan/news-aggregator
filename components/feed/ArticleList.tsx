@@ -3,10 +3,25 @@ import { Newspaper } from "lucide-react";
 import EmptyState from "@/components/UI/EmptyState/EmptyState";
 
 import ArticleCard from "./ArticleCard";
+import ArticleCardSkeleton from "./ArticleCardSkeleton";
 import { IArticleListProps } from "./types";
 
-const ArticleList = ({ articles, className = "", ...rest }: IArticleListProps) => {
-  if (articles.length === 0) {
+const SKELETON_COUNT = 6;
+
+/**
+ * Owns the grid, and therefore all three states — loading, empty, and loaded.
+ *
+ * The alternative (a separate skeleton component with its own grid) means the
+ * same responsive classes written twice, and a layout that jumps the moment they
+ * drift apart.
+ */
+const ArticleList = ({
+  articles,
+  isLoading = false,
+  className = "",
+  ...rest
+}: IArticleListProps) => {
+  if (!isLoading && articles.length === 0) {
     return (
       <EmptyState
         icon={<Newspaper className="size-8" />}
@@ -19,12 +34,17 @@ const ArticleList = ({ articles, className = "", ...rest }: IArticleListProps) =
 
   return (
     <div
+      aria-busy={isLoading || undefined}
       className={`grid gap-4 sm:grid-cols-2 lg:grid-cols-3 ${className}`}
       {...rest}
     >
-      {articles.map((article) => (
-        <ArticleCard key={article.id} article={article} />
-      ))}
+      {isLoading
+        ? Array.from({ length: SKELETON_COUNT }, (_, index) => (
+            <ArticleCardSkeleton key={index} />
+          ))
+        : articles.map((article) => (
+            <ArticleCard key={article.id} article={article} />
+          ))}
     </div>
   );
 };

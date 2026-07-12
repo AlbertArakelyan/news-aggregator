@@ -7,6 +7,7 @@ import {
   Article,
   ArticleQuery,
   NewsSource,
+  SourceCapabilities,
   SourceId,
   SourceResult,
 } from "./sources/types";
@@ -27,6 +28,22 @@ const FIXTURES: Record<SourceId, unknown> = {
  * explicitly enabled, and server-only, so it can never reach a browser.
  */
 const isFixtureMode = () => process.env.NEWS_FIXTURES === "1";
+
+/**
+ * In fixture mode nothing was filtered upstream, because `buildUrl` is never
+ * called — so *every* filter is unsupported and must be applied in memory.
+ *
+ * Without this, a source that declares `category: true` has its category filter
+ * skipped in both places (the provider never saw it, and applyUnsupportedFilters
+ * trusts the capability), and a filtered feed silently returns unfiltered
+ * articles. Exactly the failure the capability model exists to prevent.
+ */
+const NOTHING_SUPPORTED: SourceCapabilities = {
+  keyword: false,
+  dateRange: false,
+  category: false,
+  author: false,
+};
 
 /**
  * Server-only. Imported from `pages/api/*` and `getServerSideProps` — never from
@@ -164,7 +181,12 @@ export async function aggregate(query: ArticleQuery): Promise<AggregateResult> {
     selected.map(async (source) => {
       const articles = await fetchFromSource(source, query);
 
-      return applyUnsupportedFilters(articles, source, query);
+      // Fixtures bypass buildUrl, so the provider applied nothing.
+      const effective = isFixtureMode()
+        ? { ...source, capabilities: NOTHING_SUPPORTED }
+        : source;
+
+      return applyUnsupportedFilters(articles, effective, query);
     }),
   );
 

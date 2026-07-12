@@ -1,6 +1,15 @@
 export type SourceId = "guardian" | "nyt" | "newsapi";
 
 /**
+ * The canonical source ids, as runtime values.
+ *
+ * Lives here, in the only module with no imports, so a *client* component can
+ * validate a source id without importing `registry.ts` — which would drag every
+ * adapter, and the provider endpoints, into the browser bundle.
+ */
+export const SOURCE_IDS: SourceId[] = ["guardian", "nyt", "newsapi"];
+
+/**
  * The internal article shape. Every provider normalizes onto this, and nothing
  * provider-shaped escapes an adapter — the aggregator, the API route and the
  * components know only this type.

@@ -8,8 +8,10 @@ export interface IArticleCardProps extends HTMLAttributes<HTMLElement> {
 
 export interface IArticleListProps extends HTMLAttributes<HTMLDivElement> {
   articles: Article[];
+  isLoading?: boolean;
 }
 
 export interface ISourceStatusProps extends HTMLAttributes<HTMLDivElement> {
   sources: SourceResult[];
 }
+

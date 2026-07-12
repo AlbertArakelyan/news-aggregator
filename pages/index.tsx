@@ -1,16 +1,27 @@
-import Head from "next/head";
 import type { GetServerSideProps } from "next";
+import Head from "next/head";
 
 import ArticleList from "@/components/feed/ArticleList";
 import SourceStatus from "@/components/feed/SourceStatus";
+import ActiveFilters from "@/components/filters/ActiveFilters";
+import FilterBar from "@/components/filters/FilterBar";
+import { ISourceOption } from "@/components/filters/types";
 import ThemeToggle from "@/components/theme/ThemeToggle";
+import useArticleFilters from "@/hooks/useArticleFilters";
+import useRouteLoading from "@/hooks/useRouteLoading";
 import { aggregate } from "@/lib/aggregator";
 import { parseArticleQuery } from "@/lib/query";
+import { SOURCES } from "@/lib/sources/registry";
 import { AggregateResult } from "@/lib/sources/types";
 
-type FeedProps = AggregateResult;
+interface FeedProps extends AggregateResult {
+  sourceOptions: ISourceOption[];
+}
 
-export default function Feed({ articles, sources }: FeedProps) {
+export default function Feed({ articles, sources, sourceOptions }: FeedProps) {
+  const { filters, isActive, setFilters, clearFilters } = useArticleFilters();
+  const isLoading = useRouteLoading();
+
   return (
     <>
       <Head>
@@ -21,56 +32,84 @@ export default function Feed({ articles, sources }: FeedProps) {
         />
       </Head>
 
-      <main className="mx-auto max-w-6xl px-6 py-12">
-        <header className="mb-8 flex flex-wrap items-start justify-between gap-6">
+      <main className="mx-auto max-w-7xl px-6 py-10">
+        <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">News</h1>
             <p className="mt-2 text-muted-text">
-              {articles.length} articles from{" "}
-              {sources.filter((source) => source.ok).length} sources.
+              {isLoading
+                ? "Searching…"
+                : `${articles.length} articles from ${
+                    sources.filter((source) => source.ok).length
+                  } sources.`}
             </p>
           </div>
 
           <ThemeToggle />
         </header>
 
-        <SourceStatus sources={sources} className="mb-6" />
+        <div className="grid gap-8 lg:grid-cols-[16rem_1fr]">
+          <FilterBar
+            filters={filters}
+            sourceOptions={sourceOptions}
+            isActive={isActive}
+            onFiltersChange={setFilters}
+            onClear={clearFilters}
+          />
 
-        <ArticleList articles={articles} />
+          <div className="min-w-0">
+            <ActiveFilters
+              filters={filters}
+              sourceOptions={sourceOptions}
+              isActive={isActive}
+              onFiltersChange={setFilters}
+              onClear={clearFilters}
+              className="mb-5"
+            />
+
+            <SourceStatus sources={sources} className="mb-5" />
+
+            <ArticleList articles={articles} isLoading={isLoading} />
+          </div>
+        </div>
       </main>
     </>
   );
 }
 
 /**
- * Data is fetched **on the server**, never in the browser.
+ * Every provider call happens here, on the server. The keys never reach the
+ * browser — which matters, because this repo is public.
  *
  * `aggregate` is called directly rather than through `/api/articles`: the Next
  * docs are explicit that getServerSideProps should call the data source itself,
- * since it already runs on the server — proxying through our own route would
- * just add a network hop.
+ * since it already runs on the server.
  *
- * This is also what keeps the API keys secret. Everything `aggregate` touches is
- * eliminated from the client bundle, so `GUARDIAN_API_KEY` and friends never
- * reach the browser — which matters, because this repo is public.
+ * Filters live in the URL, so applying one is a route change that re-runs this
+ * function. That is the whole data path — there is no second, client-side fetch
+ * to keep in sync, and a filtered feed is a shareable, server-rendered link.
  *
- * Search and filters (step 5) read from the same URL query, so a filtered feed
- * stays a shareable, server-rendered link. Static generation is not an option
- * here: the feed depends on a per-request query string. If a "top headlines"
- * page with no filters is ever added, `getStaticProps` with `revalidate` would
- * suit it, and `getStaticPaths` would suit per-category routes.
+ * Static generation is not an option here: the feed depends on a per-request
+ * query string. A future unfiltered "top headlines" page would suit
+ * `getStaticProps` with `revalidate`, and per-category routes `getStaticPaths`.
  */
 export const getServerSideProps: GetServerSideProps<FeedProps> = async (
   context,
 ) => {
   const result = await aggregate(parseArticleQuery(context.query));
 
-  // Same cache posture as the API route, so an SSR hit and a client-side filter
-  // change do not have different freshness.
   context.res.setHeader(
     "Cache-Control",
     "public, s-maxage=60, stale-while-revalidate=300",
   );
 
-  return { props: result };
+  return {
+    props: {
+      ...result,
+      // Passed down rather than imported by the filter UI: importing the
+      // registry into a client component would pull every adapter — and the
+      // code that reads the API keys — into the browser bundle.
+      sourceOptions: SOURCES.map(({ id, name }) => ({ id, name })),
+    },
+  };
 };

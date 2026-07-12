@@ -140,9 +140,9 @@ An interview take-home: the UI for a **news aggregator** that pulls articles fro
 
 ## State of the codebase
 
-Done (`PLAN.md` steps 1–3, plus the feed): Docker, the README, the design system, the ten UI primitives, the three source adapters + aggregator behind `/api/articles`, and a server-rendered feed at `/`.
+Done (`PLAN.md` steps 1–5): Docker, the README, the design system, the ten UI primitives, the three source adapters + aggregator, a server-rendered feed at `/`, and search + filtering (keyword, date range, category, source).
 
-Not built: **search and filters** (step 5) and the **personalized feed** (step 6) — the two remaining requirements from the brief. `pages/api/hello.ts` is still the create-next-app sample and is replaceable.
+Not built: the **personalized feed** (step 6) — preferred sources, categories and authors — which is the last requirement from the brief. `pages/api/hello.ts` is still the create-next-app sample and is replaceable.
 
 ## Data flow
 
@@ -151,9 +151,11 @@ Everything provider-facing is **server-side**, because this repo is public and t
 - `lib/sources/*` — one adapter per provider. `buildUrl` and `parse` are **pure**; the aggregator owns all IO. That is what makes them testable against fixtures.
 - `lib/aggregator.ts` — fans out with `Promise.allSettled`, so one dead provider **degrades** the feed instead of emptying it, then dedupes by URL and sorts by date.
 - `pages/index.tsx` — `getServerSideProps` calls `aggregate` **directly**, not our own `/api/articles`. The Next docs are explicit about this: GSSP already runs on the server, so proxying through your own route just adds a hop.
-- `pages/api/articles.ts` — the same aggregator, for **client-side** refetches when a filter changes.
+- `pages/api/articles.ts` — the same aggregator over HTTP. **The feed does not use it.** It is the inspection surface for verifying an adapter without the UI in the way (`/check` and `add-news-source` drive it).
 
-Both entry points parse the query with `lib/query.ts`, so an SSR load and a client-side filter interpret the same URL identically.
+**Filters live in the URL, and that is the whole data path.** Applying one is a route change that re-runs `getServerSideProps` — so a filtered feed is a shareable, server-rendered link, the back button works, and there is no second client-side fetch path to keep in sync. `lib/query.ts` owns both directions of that contract (`parseArticleQuery` and `toQueryParams`); if they drift, a shared link means one thing to the server and another to the client.
+
+`lib/query.ts` must **never** import `registry.ts` — the filter UI imports `query.ts`, and the registry pulls in every adapter, which would put the provider endpoints and the key-reading code into the browser bundle. That is why the canonical source-id list lives in the import-free `lib/sources/types.ts`.
 
 `pages/ui.tsx` is a component gallery (a Storybook stand-in) rendering every primitive in every variant. Keep it in sync when the library changes, and **delete it before final delivery** — it is developer scaffolding, not product.
 

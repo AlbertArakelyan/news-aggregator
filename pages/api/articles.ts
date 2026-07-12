@@ -5,16 +5,21 @@ import { parseArticleQuery } from "@/lib/query";
 import { AggregateResult } from "@/lib/sources/types";
 
 /**
- * The server-side proxy. Every provider call happens here, never in the browser.
+ * The aggregator over HTTP. Every provider call happens server-side, never in
+ * the browser — which is what keeps the API keys out of the client bundle (this
+ * repo is public), sidesteps CORS, and makes NewsAPI's free tier usable at all,
+ * since it rejects browser-origin requests outright.
  *
- * This is what keeps the API keys out of the client bundle (the repo is public),
- * sidesteps CORS entirely, and makes NewsAPI's free tier usable at all — it
- * rejects browser-origin requests outright.
+ * **The feed does not use this route.** Filters live in the URL, so applying one
+ * re-runs `getServerSideProps`, which calls `aggregate` directly — the Next docs
+ * are explicit that a page should not fetch its own API route. Keeping a second,
+ * client-side fetch path would mean two ways to load the same data and two
+ * states to keep in sync.
  *
- * The page SSRs its first render by calling `aggregate` directly from
- * `getServerSideProps` (per the Next docs: do not fetch your own API route from
- * it). This route exists for the *client-side* case — changing a filter should
- * refetch the feed without a full navigation.
+ * It earns its place as the **inspection surface**: it is how an adapter is
+ * verified without the UI in the way (`/check` and the `add-news-source` skill
+ * both drive it), and it is the entry point if anything ever does need articles
+ * client-side.
  */
 export default async function handler(
   req: NextApiRequest,

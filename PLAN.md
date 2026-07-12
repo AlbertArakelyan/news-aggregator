@@ -127,7 +127,16 @@ Each adapter does two mappings: internal `ArticleQuery` → its provider's query
    components/feed/ArticleList.tsx
    components/feed/types.ts
    ```
-5. **Search + filters**, with filter state held in **URL query params** — shareable links, working back button, and no separate state library.
+5. **Search + filters — DONE.** `components/filters/` (`FilterBar`, `FilterPanel`, `SearchInput`, `ActiveFilters`), `hooks/useArticleFilters.ts`.
+
+   Filter state lives in **URL query params**, so applying a filter is a route change that re-runs `getServerSideProps`. **One data path, not two**: a filtered feed is a shareable, server-rendered link, the back button works for free, and there is no client-side filter state that can disagree with the address bar. `lib/query.ts` owns *both* directions of the URL contract, with a round-trip test — if they drift, a shared link means different things to the server and the client.
+
+   `FilterPanel` is written once and rendered twice (desktop sidebar, mobile `Drawer`), so the breakpoints cannot drift apart. Search is debounced 400ms: without it, every keystroke would hit three providers.
+
+   Two bugs found here, both of which failed **silently**:
+
+   - NYT's category filter returned zero for *every* category. The `fq` field is `section.name` (dot), though the same field comes back as `section_name` (underscore). The wrong spelling is not an error — NYT answers 200 with `docs: null, hits: 0`, so NYT quietly vanished from every categorized feed. Regression-tested.
+   - Fixture mode made `capabilities` lie: fixtures skip `buildUrl`, so no provider-side filtering happens, yet the capability still claimed it did and the in-memory pass skipped it too. In fixture mode every filter is now applied in memory.
 6. **Personalized feed**: preferences (sources, categories, authors) in `localStorage`, applied as default filters. Client-only — reuse the `useSyncExternalStore` approach from `useTheme` rather than reintroducing a mount flag.
 
 ## Two open calls

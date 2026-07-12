@@ -106,7 +106,15 @@ const nyt: NewsSource = {
 
     if (query.category) {
       // Filter Query syntax — Lucene-ish, and the quotes are required.
-      url.searchParams.set("fq", `section_name:("${SECTIONS[query.category]}")`);
+      //
+      // The field is `section.name` with a DOT, even though the same field comes
+      // back in the response as `section_name` with an underscore. Using the
+      // response spelling in a query is not an error: NYT answers 200 with
+      // `docs: null, hits: 0`, so every categorized feed silently loses NYT and
+      // nothing anywhere reports a problem. Verified against the live API —
+      // section.name:("World") returns 10,000 hits, section_name:("World")
+      // returns zero.
+      url.searchParams.set("fq", `section.name:("${SECTIONS[query.category]}")`);
     }
 
     return url.toString();

@@ -69,11 +69,15 @@ Everything else stays lowercase: hooks (`useArticles.ts` — camelCase, named af
 Directories are lowercase (`components/feed/`, `lib/sources/`) with one exception: **`components/UI/`** is capitalized, because UI is an acronym and is always written that way.
 
 ```
-components/UI/Button.tsx        component      -> PascalCase
-components/feed/ArticleCard.tsx component      -> PascalCase, lowercase folder
-hooks/useArticles.ts            hook           -> camelCase
-lib/sources/guardian.ts         plain module   -> lowercase
+components/UI/Button/Button.tsx  UI primitive   -> own folder, PascalCase
+components/UI/Button/types.ts    its props      -> lowercase, sits beside it
+components/feed/ArticleCard.tsx  feature comp   -> PascalCase, lowercase folder, no folder of its own
+components/feed/types.ts         shared types   -> one per feature folder
+hooks/useArticles.ts             hook           -> camelCase
+lib/sources/guardian.ts          plain module   -> lowercase
 ```
+
+**UI primitives get a folder each** — `UI/<Name>/<Name>.tsx` + `UI/<Name>/types.ts`, default export, props interface named `I<Name>Props`. Feature components do not: they are flat PascalCase files in a lowercase feature folder, sharing one `types.ts`. The full rules for primitives live in `components/UI/CLAUDE.md` and are modelled on the sibling Lumark project (`../Lumark/src/components/UI/`) — read that before adding one.
 
 Note that `pages/` is exempt — the Pages Router derives URLs from filenames, so those stay lowercase (`pages/index.tsx`, `pages/api/articles.ts`) even though they export components.
 

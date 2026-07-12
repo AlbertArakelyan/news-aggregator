@@ -43,28 +43,49 @@ Each adapter does two mappings: internal `ArticleQuery` → its provider's query
 
 1. **UI library on Tailwind** — the presentational primitives every later step composes, built before any feature so no feature invents its own button.
 
+   Structure follows the sibling **Lumark** project (`../Lumark/src/components/UI/`), which is the reference implementation. **One folder per component**, holding the component and its types:
+
    ```
-   components/UI/Button.tsx      variants: primary | secondary | ghost; sizes; loading state
-   components/UI/Input.tsx       text + date inputs, with label and error slots
-   components/UI/Select.tsx      single + multi select (sources, categories, authors)
-   components/UI/Checkbox.tsx    preference toggles
-   components/UI/Chip.tsx        active-filter pills, source/category tags
-   components/UI/Card.tsx        surface primitive the article card sits on
-   components/UI/Skeleton.tsx    loading placeholders
-   components/UI/Spinner.tsx
-   components/UI/EmptyState.tsx
-   components/UI/Drawer.tsx      filter panel on mobile, sidebar on desktop
-   lib/cn.ts                     clsx + tailwind-merge class merger
+   components/UI/Button/Button.tsx        + Button/types.ts     variants, sizes, icon, isLoading
+   components/UI/Input/Input.tsx          + Input/types.ts      text + date, icon, error slot
+   components/UI/Select/Select.tsx        + Select/types.ts     single + multi (sources, categories, authors)
+   components/UI/Checkbox/Checkbox.tsx    + Checkbox/types.ts   preference toggles
+   components/UI/Chip/Chip.tsx            + Chip/types.ts       active-filter pills, source/category tags
+   components/UI/Card/Card.tsx            + Card/types.ts       surface the article card sits on
+   components/UI/Skeleton/Skeleton.tsx    + Skeleton/types.ts   loading placeholders
+   components/UI/Spinner/Spinner.tsx      + Spinner/types.ts
+   components/UI/EmptyState/EmptyState.tsx + EmptyState/types.ts
+   components/UI/Drawer/Drawer.tsx        + Drawer/types.ts     filter panel on mobile, sidebar on desktop
    ```
 
-   No barrel `index.ts`. Every consumer imports the component directly — `import { Button } from "@/components/UI/Button"`.
+   The pattern each component must follow, matching Lumark:
 
-   Two supporting pieces: **design tokens** (colors, spacing, radii, font sizes) declared as CSS variables in the `@theme inline` block of `styles/globals.css` — Tailwind v4 is configured in CSS, there is no `tailwind.config.js` — and a **variant pattern**, `cva` (or a small local equivalent) so a component's styles live in one table instead of scattered ternaries.
+   - **`export default`** the component, typed `FC<I<Name>Props>`. Import it directly — `import Button from "@/components/UI/Button/Button"`. No barrel `index.ts` anywhere.
+   - **`types.ts`** exports `I<Name>Props` (capital `I` prefix) plus the string-literal unions the component exposes — `ButtonVariantType`, `ButtonSizeType`, `ButtonRoundedType`, and so on.
+   - **`I<Name>Props` extends the native HTML attributes of the root element** (`ButtonHTMLAttributes<HTMLButtonElement>`, `InputHTMLAttributes<HTMLInputElement>`, `HTMLAttributes<HTMLDivElement>` …), and `PropsWithChildren` only when the component actually renders children.
+   - **`{...rest}` spreads onto the root element**, or onto the most semantically important element when the component wraps its root — `Input` spreads onto the inner `<input>`, since that is what callers configure.
+   - **Variants are `Record<UnionType, string>` maps inside `useMemo`**, with a fallback to the default: `return sizeMapping[size] || sizeMapping.md;`.
+   - **Extra `*ClassName` props** — one per meaningful structural layer (`wrapperClassName`, `labelClassName`, `buttonContentClassName`), while the plain `className` is reserved for the root element so it composes with `{...rest}`.
+   - **Inline Tailwind utility classes only.** No CSS modules, no CSS-in-JS, no external UI library.
 
-   Adds two small deps: `clsx` + `tailwind-merge` (and optionally `class-variance-authority`). This is the DRY half of the grading rubric made visible: Tailwind class strings are written **once**, in a primitive, and every feature composes them. Each primitive is presentational and stateless — single responsibility, no data fetching, no business logic.
+   **No new dependencies.** Lumark deliberately uses none of `clsx` / `tailwind-merge` / `class-variance-authority` — class strings are plain template literals and variants are the `useMemo` + `Record` maps above. Dropping the `lib/cn.ts` helper I originally planned keeps this at zero added deps, which is the KISS half of the rubric. `lucide-react` is the icon library if icons are needed (Lumark's choice; nothing else).
+
+   **Design tokens** (colors, radii, spacing) are declared as CSS variables in the `@theme inline` block of `styles/globals.css` — Tailwind v4 is CSS-first here and there is no `tailwind.config.js`. Components reference semantic token classes (`bg-primary`, `text-text-color`, `border-border-color`, `bg-danger` …) and never hardcode hex colors.
+
+   `components/UI/CLAUDE.md` holds these rules in full, so they are loaded automatically when working in that folder.
+
+   This is the DRY half of the rubric made visible: Tailwind class strings are written **once**, in a primitive, and every feature composes them. Each primitive is presentational and stateless — single responsibility, no data fetching, no business logic.
 
 2. **Types + adapters + aggregator** with the `/api/articles` route — pure functions, no UI. Testable in isolation.
-3. **Feed UI** (`components/feed/ArticleCard.tsx`, `ArticleList.tsx`, …): article card, list, loading/empty/error states, responsive layout — composed from the step-1 primitives, adding no new raw Tailwind beyond layout.
+3. **Feed UI**: article card, list, loading/empty/error states, responsive layout — composed from the step-1 primitives, adding no new raw Tailwind beyond layout.
+
+   Feature components do **not** get a folder each — that pattern is reserved for UI primitives. They are flat PascalCase files grouped by feature, sharing one `types.ts` per feature folder, exactly as Lumark does it in `Layouts/MainLayout/FilesPanel/`:
+
+   ```
+   components/feed/ArticleCard.tsx
+   components/feed/ArticleList.tsx
+   components/feed/types.ts
+   ```
 4. **Search + filters**, with filter state held in **URL query params** — shareable links, working back button, and no separate state library.
 5. **Personalized feed**: preferences (sources, categories, authors) in `localStorage`, applied as default filters. Client-only, so it needs care to avoid a hydration mismatch.
 

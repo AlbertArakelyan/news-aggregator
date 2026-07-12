@@ -42,6 +42,36 @@ yarn install --frozen-lockfile  # reproducible install (CI / Docker)
 
 `--frozen-lockfile` is the Yarn Classic flag. `--immutable` is Yarn Berry and will not work here.
 
+## Installation
+
+1. **Clone and install**
+
+   ```bash
+   git clone https://github.com/AlbertArakelyan/news-aggregator.git
+   cd news-aggregator
+   yarn install
+   ```
+
+2. **Add your API keys** — copy the example and fill in at least one ([details below](#api-keys--do-this-first)):
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   No keys yet? Put `NEWS_FIXTURES=1` in `.env` and the app runs on the recorded fixtures.
+
+3. **Run it**
+
+   ```bash
+   yarn dev          # http://localhost:3000
+   ```
+
+**With Docker instead** — no Node or yarn needed on the host. Do step 2, then:
+
+```bash
+docker compose up --build     # http://localhost:3000
+```
+
 ## API keys — do this first
 
 ```bash

@@ -1,26 +1,70 @@
 @import "tailwindcss";
+@import "./base.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * Class-based dark mode. The `dark:` variant keys off <html class="dark">, which
+ * the blocking script in pages/_document.tsx sets before first paint.
+ *
+ * Components should rarely need `dark:` at all — the semantic tokens below
+ * already swap with the theme. Reach for it only when a rule cannot be expressed
+ * as a token (e.g. inverting an image filter).
+ */
+@custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Expose the semantic aliases from base.css to Tailwind. `inline` keeps these as
+ * live var() references instead of compiling the value in, which is what lets a
+ * single class like `bg-surface` follow the theme rather than freeze to a color.
+ */
 @theme inline {
   --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-sunken: var(--surface-sunken);
+
+  --color-text-color: var(--text-color);
+  --color-muted-text: var(--muted-text);
+  --color-subtle-text: var(--subtle-text);
+
+  --color-border-color: var(--border-color);
+  --color-border-strong: var(--border-strong);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-secondary-active: var(--secondary-active);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-ghost-hover: var(--ghost-hover);
+  --color-ghost-active: var(--ghost-active);
+
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-bg: var(--danger-bg);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-bg: var(--success-bg);
+
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-bg: var(--warning-bg);
+
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-bg: var(--info-bg);
+
+  --color-ring: var(--ring);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--background);
+  color: var(--text-color);
 }

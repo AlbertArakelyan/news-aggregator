@@ -36,7 +36,24 @@ Before writing new markup elsewhere, scan this folder first and reuse what exist
    }, [size]);
    ```
 10. **Styling is inline Tailwind utility classes**, composed with template literals. No CSS modules, no styled-components, no CSS-in-JS, no external UI libs, and **no `clsx` / `tailwind-merge` / `class-variance-authority`** — Lumark deliberately uses none of them, and neither do we.
-11. **Theme tokens**: this project is **Tailwind v4, configured CSS-first** — there is no `tailwind.config.js`. Tokens are CSS variables in the `@theme inline` block of `styles/globals.css`. Use the semantic classes they generate (`bg-primary`, `bg-surface`, `text-text-color`, `border-border-color`, `bg-danger`, …). Never hardcode hex colors; if a token is missing, add it to `globals.css`.
+11. **Theme tokens** — the full set, defined in `styles/base.css` and exposed to Tailwind by the `@theme inline` block in `styles/globals.css`:
+
+    | Role | Classes |
+    |---|---|
+    | surfaces | `bg-background`, `bg-surface`, `bg-surface-hover`, `bg-surface-sunken` |
+    | text | `text-text-color`, `text-muted-text`, `text-subtle-text` |
+    | lines | `border-border-color`, `border-border-strong` |
+    | primary action | `bg-primary`, `bg-primary-hover`, `bg-primary-active`, `text-primary-foreground` |
+    | secondary action | `bg-secondary`, `bg-secondary-hover`, `bg-secondary-active`, `text-secondary-foreground` |
+    | ghost action | `bg-ghost-hover`, `bg-ghost-active` |
+    | status | `bg-danger`, `text-danger`, `bg-danger-bg`, `text-danger-foreground` — same shape for `success`, `warning`, `info` |
+    | focus ring | `ring-ring` (with `focus-visible:ring-3`) |
+
+    **Never hardcode a hex, never use a Tailwind stock color (`bg-white`, `text-zinc-500`), and never reach for a raw palette step (`--neutral-400`) directly.** Only the semantic aliases above. If a token is missing, add it to `base.css` *and* map it in `globals.css` — both, or Tailwind will not generate the class.
+
+    Because the tokens themselves swap with the theme, **you should almost never write a `dark:` class.** `bg-surface` is already correct in both themes. Reach for `dark:` only when a rule cannot be expressed as a token (e.g. inverting an image).
+
+12. **Class names must be statically analyzable.** Tailwind scans source as plain text, so a constructed class like `` `bg-${status}` `` is never generated. Write the full class in every branch of your `Record` maps.
 
 ## Don'ts
 

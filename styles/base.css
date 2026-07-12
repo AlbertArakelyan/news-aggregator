@@ -1,0 +1,145 @@
+/*
+ * Design tokens.
+ *
+ * Two layers, and the distinction matters:
+ *
+ *   1. Raw palette   — literal colors. Never referenced by a component.
+ *   2. Semantic alias — what a thing *is* (surface, border, danger). This is the
+ *                       only layer Tailwind exposes (see @theme inline in
+ *                       globals.css) and the only layer components may use.
+ *
+ * Theming is therefore a swap of layer 2: `.dark` re-points the same alias names
+ * at different raw values, and every component follows without changing a class.
+ *
+ * Palette direction: monochrome ink on warm "newsprint" neutrals. Chroma is
+ * reserved exclusively for status (danger/success/warning/info), so the only
+ * saturated color on screen always carries meaning. The primary action is ink
+ * in light and paper in dark — it inverts rather than staying a fixed hue.
+ */
+
+:root {
+  /* ===== Raw: warm neutral scale ===== */
+  --neutral-0: #ffffff;
+  --neutral-50: #faf9f7;
+  --neutral-100: #f4f2ef;
+  --neutral-200: #e8e5e0;
+  --neutral-300: #d7d3cc;
+  --neutral-400: #a9a49c;
+  /* Half-step. Exists because neutral-400 as light-theme subtle-text is only
+     2.48:1 on white — below the 3:1 floor. This clears it at 3.34:1. */
+  --neutral-450: #918c84;
+  --neutral-500: #7a756d;
+  --neutral-600: #57534d;
+  --neutral-700: #403c37;
+  --neutral-800: #292623;
+  --neutral-900: #1b1917;
+  --neutral-950: #100f0e;
+
+  /* ===== Raw: status hues (light / dark pairs) ===== */
+  --red-500: #dc2626;
+  --red-400: #ef4444;
+  --green-600: #15803d;
+  --green-500: #22c55e;
+  --amber-600: #b45309;
+  --amber-500: #f59e0b;
+  --blue-600: #0369a1;
+  --blue-400: #38bdf8;
+
+  /* ===== Semantic aliases: light ===== */
+  color-scheme: light;
+
+  /* surfaces */
+  --background: var(--neutral-50);
+  --surface: var(--neutral-0);
+  --surface-hover: var(--neutral-100);
+  --surface-sunken: var(--neutral-100);
+
+  /* text */
+  --text-color: var(--neutral-900);
+  --muted-text: var(--neutral-500);
+  --subtle-text: var(--neutral-450);
+
+  /* lines */
+  --border-color: var(--neutral-200);
+  --border-strong: var(--neutral-300);
+
+  /* primary action — ink in light, paper in dark */
+  --primary: var(--neutral-900);
+  --primary-hover: var(--neutral-800);
+  --primary-active: var(--neutral-700);
+  --primary-foreground: var(--neutral-50);
+
+  /* secondary action — quiet neutral fill */
+  --secondary: var(--neutral-200);
+  --secondary-hover: var(--neutral-300);
+  --secondary-active: var(--neutral-400);
+  --secondary-foreground: var(--neutral-900);
+
+  /* ghost action — tint derived from the current text color, so it themes itself */
+  --ghost-hover: color-mix(in srgb, var(--muted-text) 10%, transparent);
+  --ghost-active: color-mix(in srgb, var(--muted-text) 18%, transparent);
+
+  /* status */
+  --danger: var(--red-500);
+  --danger-foreground: var(--neutral-0);
+  --danger-bg: color-mix(in srgb, var(--danger) 10%, transparent);
+
+  --success: var(--green-600);
+  --success-foreground: var(--neutral-0);
+  --success-bg: color-mix(in srgb, var(--success) 10%, transparent);
+
+  --warning: var(--amber-600);
+  --warning-foreground: var(--neutral-0);
+  --warning-bg: color-mix(in srgb, var(--warning) 10%, transparent);
+
+  --info: var(--blue-600);
+  --info-foreground: var(--neutral-0);
+  --info-bg: color-mix(in srgb, var(--info) 10%, transparent);
+
+  /* focus ring — always the primary ink, softened */
+  --ring: color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+.dark {
+  color-scheme: dark;
+
+  /* surfaces — near-black canvas, lifted cards */
+  --background: var(--neutral-950);
+  --surface: var(--neutral-900);
+  --surface-hover: var(--neutral-800);
+  --surface-sunken: #0a0a09;
+
+  /* text */
+  --text-color: var(--neutral-100);
+  --muted-text: var(--neutral-400);
+  --subtle-text: var(--neutral-500);
+
+  /* lines */
+  --border-color: var(--neutral-800);
+  --border-strong: var(--neutral-700);
+
+  /* primary inverts: paper on ink */
+  --primary: var(--neutral-100);
+  --primary-hover: var(--neutral-200);
+  --primary-active: var(--neutral-300);
+  --primary-foreground: var(--neutral-900);
+
+  /* secondary */
+  --secondary: var(--neutral-800);
+  --secondary-hover: var(--neutral-700);
+  --secondary-active: var(--neutral-600);
+  --secondary-foreground: var(--neutral-100);
+
+  /* status — brighter hues so they hold up on a dark canvas */
+  --danger: var(--red-400);
+  --danger-foreground: var(--neutral-950);
+
+  --success: var(--green-500);
+  --success-foreground: var(--neutral-950);
+
+  --warning: var(--amber-500);
+  --warning-foreground: var(--neutral-950);
+
+  --info: var(--blue-400);
+  --info-foreground: var(--neutral-950);
+}

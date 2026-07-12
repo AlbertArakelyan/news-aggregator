@@ -41,7 +41,31 @@ Each adapter does two mappings: internal `ArticleQuery` → its provider's query
 
 ## Build order
 
-1. **UI library on Tailwind** — the presentational primitives every later step composes, built before any feature so no feature invents its own button.
+1. **Design system — DONE.** Tokens and theming, built before the components because a `Button` cannot be written until `bg-primary` means something.
+
+   ```
+   styles/base.css        raw palette -> semantic aliases; .dark re-points the aliases
+   styles/globals.css     @custom-variant dark + @theme inline (aliases -> Tailwind)
+   lib/theme.ts           theme types, storage, and the blocking no-flash script
+   hooks/useTheme.ts      useSyncExternalStore over localStorage + matchMedia
+   pages/_document.tsx    runs the no-flash script in <head>
+   pages/_app.tsx         Geist font variables, app-wide
+   pages/index.tsx        temporary token preview — replaced by the feed in step 4
+   ```
+
+   **Two token layers.** A raw palette (literal colors, never referenced by a component) and semantic aliases (`--surface`, `--muted-text`, `--danger`) which are the *only* layer Tailwind exposes. Theming is therefore a swap of the alias layer: `.dark` re-points the same names at different raw values and every component follows without changing a class. Components use `bg-surface` / `text-muted-text`, never `bg-white` or a hex.
+
+   **Palette — monochrome ink on warm newsprint neutrals.** Chroma is reserved exclusively for status (danger/success/warning/info), so the only saturated color on screen always carries meaning. The primary action is ink in light and paper in dark: it inverts rather than staying a fixed hue. This is a deliberate rejection of the accent-hue approach — any brand accent has to avoid colliding with red/green/amber/blue, which leaves violet (the generic "AI" look) or teal/magenta (which fight with success). Dropping the accent sidesteps the collision entirely and reads as flat, high-contrast, editorial.
+
+   **Dark mode is class-based** (`<html class="dark">`), not `prefers-color-scheme`, because the preference is a *user choice* of light / dark / system — a media query alone cannot express the override. `@custom-variant dark (&:where(.dark, .dark *))` points Tailwind's `dark:` at that class, though components should rarely need `dark:` at all since the tokens already swap.
+
+   The three things that make it correct rather than merely working:
+
+   - **No flash of the wrong theme.** A blocking inline `<script>` in `_document`'s `<head>` sets the class before first paint. It cannot be `next/script` and it cannot wait for React.
+   - **No hydration mismatch.** The server cannot know the theme, so `useTheme` reads localStorage and matchMedia through `useSyncExternalStore` — which hydrates from a server snapshot and then re-renders with the real value. That is why there is no `isMounted` flag and no `setState` in an effect.
+   - **Accessible.** Every text/background pair was contrast-checked; all 22 meet WCAG AA in both themes. `--neutral-450` exists solely because the obvious choice (`--neutral-400`) gave light-theme `subtle-text` only 2.48:1.
+
+2. **UI primitives** — the presentational components every later step composes, so no feature invents its own button.
 
    Structure follows the sibling **Lumark** project (`../Lumark/src/components/UI/`), which is the reference implementation. **One folder per component**, holding the component and its types:
 
@@ -70,14 +94,16 @@ Each adapter does two mappings: internal `ArticleQuery` → its provider's query
 
    **No new dependencies.** Lumark deliberately uses none of `clsx` / `tailwind-merge` / `class-variance-authority` — class strings are plain template literals and variants are the `useMemo` + `Record` maps above. Dropping the `lib/cn.ts` helper I originally planned keeps this at zero added deps, which is the KISS half of the rubric. `lucide-react` is the icon library if icons are needed (Lumark's choice; nothing else).
 
-   **Design tokens** (colors, radii, spacing) are declared as CSS variables in the `@theme inline` block of `styles/globals.css` — Tailwind v4 is CSS-first here and there is no `tailwind.config.js`. Components reference semantic token classes (`bg-primary`, `text-text-color`, `border-border-color`, `bg-danger` …) and never hardcode hex colors.
+   Components consume the **step-1 semantic tokens** (`bg-primary`, `text-muted-text`, `border-border-color`, `bg-danger` …) and never hardcode a hex or a raw palette step.
 
    `components/UI/CLAUDE.md` holds these rules in full, so they are loaded automatically when working in that folder.
 
    This is the DRY half of the rubric made visible: Tailwind class strings are written **once**, in a primitive, and every feature composes them. Each primitive is presentational and stateless — single responsibility, no data fetching, no business logic.
 
-2. **Types + adapters + aggregator** with the `/api/articles` route — pure functions, no UI. Testable in isolation.
-3. **Feed UI**: article card, list, loading/empty/error states, responsive layout — composed from the step-1 primitives, adding no new raw Tailwind beyond layout.
+   The first primitive to build is `ThemeToggle` — the temporary preview page in `pages/index.tsx` currently hand-rolls one from a raw `<button>`, and it should be replaced by `Button` + a proper toggle.
+
+3. **Types + adapters + aggregator** with the `/api/articles` route — pure functions, no UI. Testable in isolation.
+4. **Feed UI**: article card, list, loading/empty/error states, responsive layout — composed from the step-2 primitives, adding no new raw Tailwind beyond layout. Replaces the temporary design-system preview at `pages/index.tsx`.
 
    Feature components do **not** get a folder each — that pattern is reserved for UI primitives. They are flat PascalCase files grouped by feature, sharing one `types.ts` per feature folder, exactly as Lumark does it in `Layouts/MainLayout/FilesPanel/`:
 
@@ -86,8 +112,8 @@ Each adapter does two mappings: internal `ArticleQuery` → its provider's query
    components/feed/ArticleList.tsx
    components/feed/types.ts
    ```
-4. **Search + filters**, with filter state held in **URL query params** — shareable links, working back button, and no separate state library.
-5. **Personalized feed**: preferences (sources, categories, authors) in `localStorage`, applied as default filters. Client-only, so it needs care to avoid a hydration mismatch.
+5. **Search + filters**, with filter state held in **URL query params** — shareable links, working back button, and no separate state library.
+6. **Personalized feed**: preferences (sources, categories, authors) in `localStorage`, applied as default filters. Client-only — reuse the `useSyncExternalStore` approach from `useTheme` rather than reintroducing a mount flag.
 
 ## Two open calls
 

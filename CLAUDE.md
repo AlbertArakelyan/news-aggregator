@@ -60,6 +60,24 @@ An interview take-home: the UI for a **news aggregator** that pulls articles fro
 
 Docker, the README, and `PLAN.md` are done. The application itself is still the unmodified `create-next-app` scaffold — `pages/index.tsx` is the Vercel splash page, `pages/api/hello.ts` is the sample handler, and `public/` holds the default SVGs. None of the news-aggregator features are built. Treat all of that as replaceable.
 
+## Theming and design tokens
+
+Colors live in **two layers**, and the distinction is load-bearing:
+
+- `styles/base.css` — a **raw palette** (`--neutral-500`, `--red-400`) that no component may reference, plus **semantic aliases** (`--surface`, `--muted-text`, `--danger`, `--primary`) built from it. `.dark` re-points the *aliases* at different raw values.
+- `styles/globals.css` — an `@theme inline` block mapping each alias to a Tailwind color, which is what generates `bg-surface`, `text-muted-text`, and so on. `inline` is required: it keeps the value a live `var()` reference instead of freezing it at build time, and that is what lets one class follow the theme.
+
+**Add a color in both files or the class will not exist.** Components use only the semantic classes — never a hex, never a stock Tailwind color (`bg-white`, `text-zinc-500`), never a raw palette step. The full token table is in `components/UI/CLAUDE.md`.
+
+Because the tokens swap themselves, **`dark:` classes are almost never needed** — `bg-surface` is already right in both themes. `@custom-variant dark (&:where(.dark, .dark *))` in `globals.css` points Tailwind's `dark:` at the class, for the rare case that a rule cannot be expressed as a token.
+
+Dark mode is **class-based** (`<html class="dark">`), not `prefers-color-scheme`, because the preference is a three-way user choice — light / dark / system — and a media query cannot express the override. Two pieces make it correct:
+
+- `lib/theme.ts` exports `THEME_INIT_SCRIPT`, run **blocking in `<head>`** from `pages/_document.tsx`. It sets the class before first paint; without it a dark-theme visitor sees a white flash. It cannot be `next/script` and cannot wait for React, so it is inlined as a string — the literals inside it duplicate the module's constants deliberately. Keep them in sync.
+- `hooks/useTheme.ts` reads localStorage and `matchMedia` via **`useSyncExternalStore`**, which hydrates from a server snapshot and then re-renders with the real client value. This is why there is no `isMounted` flag and no `setState` in an effect — the `react-hooks/set-state-in-effect` lint rule rejects that pattern, and `lint` will fail on it. Reuse this approach for any other client-only persisted state (e.g. the personalized-feed preferences).
+
+Every token pair was contrast-checked to WCAG AA in both themes. `--neutral-450` exists only because `--neutral-400` gave light-theme `subtle-text` 2.48:1. If you change a color, re-check it.
+
 ## Naming conventions
 
 **Any file that contains a React component is `PascalCase` and named after the component it exports** — `Button.tsx`, `ArticleCard.tsx`, `EmptyState.tsx`. One component per file, and the filename matches the export.

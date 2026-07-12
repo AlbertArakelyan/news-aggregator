@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  applyUnsupportedFilters,
-  dedupeByUrl,
-  sortByNewest,
-} from "../aggregator";
+import { applyUnsupportedFilters } from "../aggregator";
+import { appendPage, dedupeByUrl, sortByNewest } from "../articles";
 import guardianFixture from "../sources/__fixtures__/guardian.json";
 import newsapiFixture from "../sources/__fixtures__/newsapi.json";
 import guardian from "../sources/guardian";
@@ -44,6 +41,41 @@ describe("dedupeByUrl", () => {
     };
 
     expect(dedupeByUrl([base, twin])).toHaveLength(1);
+  });
+});
+
+describe("appendPage", () => {
+  it("drops a story that already arrived on an earlier page", () => {
+    // Providers paginate independently, so page 2 can resurface a page-1 story.
+    // Rendering it twice would give React two children with the same key.
+    const page1 = guardianArticles;
+    const page2 = [guardianArticles[0], ...newsapiArticles];
+
+    const ids = appendPage(page1, page2).map((article) => article.id);
+
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("keeps append order rather than re-sorting the whole list", () => {
+    // Re-sorting would let a page-2 article jump above articles the reader has
+    // already scrolled past — the list would rearrange under their thumb.
+    const older: Article = {
+      ...guardianArticles[0],
+      id: "guardian:older",
+      url: "https://example.com/older",
+      publishedAt: "2020-01-01T00:00:00.000Z",
+    };
+    const newer: Article = {
+      ...guardianArticles[0],
+      id: "guardian:newer",
+      url: "https://example.com/newer",
+      publishedAt: "2030-01-01T00:00:00.000Z",
+    };
+
+    expect(appendPage([older], [newer]).map((a) => a.id)).toEqual([
+      "guardian:older",
+      "guardian:newer",
+    ]);
   });
 });
 

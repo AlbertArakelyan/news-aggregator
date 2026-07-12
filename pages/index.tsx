@@ -2,6 +2,7 @@ import type { GetServerSideProps } from "next";
 import Head from "next/head";
 
 import ArticleList from "@/components/feed/ArticleList";
+import LoadMore from "@/components/feed/LoadMore";
 import SourceStatus from "@/components/feed/SourceStatus";
 import ActiveFilters from "@/components/filters/ActiveFilters";
 import FilterBar from "@/components/filters/FilterBar";
@@ -9,6 +10,7 @@ import { ISourceOption } from "@/components/filters/types";
 import PreferencesButton from "@/components/preferences/PreferencesButton";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import useArticleFilters from "@/hooks/useArticleFilters";
+import useInfiniteArticles from "@/hooks/useInfiniteArticles";
 import usePersonalizedDefaults from "@/hooks/usePersonalizedDefaults";
 import usePreferences from "@/hooks/usePreferences";
 import useRouteLoading from "@/hooks/useRouteLoading";
@@ -21,7 +23,7 @@ interface FeedProps extends AggregateResult {
   sourceOptions: ISourceOption[];
 }
 
-export default function Feed({ articles, sources, sourceOptions }: FeedProps) {
+export default function Feed({ sourceOptions, ...initial }: FeedProps) {
   const { filters, isActive, setFilters, clearFilters } = useArticleFilters();
   const { preferences } = usePreferences();
   const isLoading = useRouteLoading();
@@ -30,6 +32,13 @@ export default function Feed({ articles, sources, sourceOptions }: FeedProps) {
   // feed is the same feed, on the same single data path, and stays a shareable
   // link. An explicit filter in the URL always outranks a stored default.
   usePersonalizedDefaults(preferences, filters);
+
+  // Page 1 is the server-rendered `initial`; this appends the rest, resetting
+  // whenever the filters change and getServerSideProps hands down new props.
+  const { articles, hasMore, isLoadingMore, error, loadMore, sentinelRef } =
+    useInfiniteArticles(initial, filters);
+
+  const { sources } = initial;
 
   return (
     <>
@@ -82,6 +91,18 @@ export default function Feed({ articles, sources, sourceOptions }: FeedProps) {
             <SourceStatus sources={sources} className="mb-5" />
 
             <ArticleList articles={articles} isLoading={isLoading} />
+
+            {/* Hidden while the whole feed is reloading — a "load more" under a
+                grid of skeletons is noise. */}
+            {!isLoading && articles.length > 0 ? (
+              <LoadMore
+                hasMore={hasMore}
+                isLoading={isLoadingMore}
+                error={error}
+                onLoadMore={loadMore}
+                sentinelRef={sentinelRef}
+              />
+            ) : null}
           </div>
         </div>
       </main>

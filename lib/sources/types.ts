@@ -120,4 +120,10 @@ export interface SourceResult {
 export interface AggregateResult {
   articles: Article[];
   sources: SourceResult[];
+  /**
+   * Whether any source still returned rows for this page — the stop condition
+   * for infinite scroll. Measured *before* in-memory filtering: a page filtered
+   * down to nothing does not mean the provider is exhausted.
+   */
+  hasMore: boolean;
 }

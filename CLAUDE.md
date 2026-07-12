@@ -151,9 +151,13 @@ Everything provider-facing is **server-side**, because this repo is public and t
 - `lib/sources/*` — one adapter per provider. `buildUrl` and `parse` are **pure**; the aggregator owns all IO. That is what makes them testable against fixtures.
 - `lib/aggregator.ts` — fans out with `Promise.allSettled`, so one dead provider **degrades** the feed instead of emptying it, then dedupes by URL and sorts by date.
 - `pages/index.tsx` — `getServerSideProps` calls `aggregate` **directly**, not our own `/api/articles`. The Next docs are explicit about this: GSSP already runs on the server, so proxying through your own route just adds a hop.
-- `pages/api/articles.ts` — the same aggregator over HTTP. **The feed does not use it.** It is the inspection surface for verifying an adapter without the UI in the way (`/check` and `add-news-source` drive it).
+- `pages/api/articles.ts` — the same aggregator over HTTP. **Only infinite scroll calls it**, to append page 2 and beyond. It doubles as the inspection surface for verifying an adapter without the UI in the way (`/check` and `add-news-source` drive it).
 
-**Filters live in the URL, and that is the whole data path.** Applying one is a route change that re-runs `getServerSideProps` — so a filtered feed is a shareable, server-rendered link, the back button works, and there is no second client-side fetch path to keep in sync. `lib/query.ts` owns both directions of that contract (`parseArticleQuery` and `toQueryParams`); if they drift, a shared link means one thing to the server and another to the client.
+**Filters live in the URL; the page number does not.** Applying a filter is a route change that re-runs `getServerSideProps` — so a filtered feed is a shareable, server-rendered link and the back button works. Paging is scroll state, not URL state: pushing `page` on every scroll would add a history entry per page and make the back button walk backwards through the feed instead of leaving it. So the first page is server-rendered and the rest are appended client-side, sending the same filters read from the URL.
+
+`lib/query.ts` owns both directions of the URL contract (`parseArticleQuery` and `toQueryParams`); if they drift, a shared link means one thing to the server and another to the client — and a page-2 request would mean something different from the page-1 render.
+
+`lib/articles.ts` holds the pure article helpers (`dedupeByUrl`, `sortByNewest`, `appendPage`) **because the client needs them too**. They cannot live in `lib/aggregator.ts`: that imports `registry.ts` → every adapter → the code that reads the API keys, and a client import would pull all of it into the browser bundle.
 
 `lib/query.ts` must **never** import `registry.ts` — the filter UI imports `query.ts`, and the registry pulls in every adapter, which would put the provider endpoints and the key-reading code into the browser bundle. That is why the canonical source-id list lives in the import-free `lib/sources/types.ts`.
 

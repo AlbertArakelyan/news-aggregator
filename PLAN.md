@@ -136,7 +136,19 @@ Each adapter does two mappings: internal `ArticleQuery` → its provider's query
 
    - NYT's category filter returned zero for *every* category. The `fq` field is `section.name` (dot), though the same field comes back as `section_name` (underscore). The wrong spelling is not an error — NYT answers 200 with `docs: null, hits: 0`, so NYT quietly vanished from every categorized feed. Regression-tested.
    - Fixture mode made `capabilities` lie: fixtures skip `buildUrl`, so no provider-side filtering happens, yet the capability still claimed it did and the in-memory pass skipped it too. In fixture mode every filter is now applied in memory.
-6. **Personalized feed**: preferences (sources, categories, authors) in `localStorage`, applied as default filters. Client-only — reuse the `useSyncExternalStore` approach from `useTheme` rather than reintroducing a mount flag.
+6. **Personalized feed — DONE.** Preferences (sources, categories, authors) in `localStorage`, applied by writing them **into the URL** on a bare visit, so the personalized feed rides the single existing data path and stays a shareable link. `useSyncExternalStore`, as `useTheme` does — no mount flag.
+
+7. **Infinite scroll — DONE.** `hooks/useInfiniteArticles.ts`, `hooks/useOnScreen.ts`, `components/feed/LoadMore.tsx`.
+
+   Page 1 is server-rendered; the rest are appended client-side from `/api/articles`, which is finally what that route is for. **Filters stay in the URL; the page number does not** — pushing `page` on every scroll would add a history entry per page and make the back button walk backwards through the feed.
+
+   The details that make it correct rather than merely working:
+
+   - `hasMore` is measured **before** in-memory filtering. A page filtered to nothing does not mean the provider is exhausted, and using the filtered count would end the feed early whenever a filter was aggressive.
+   - Appending **dedupes**: providers paginate independently, so page 2 can resurface a page-1 story, and React would throw on the duplicate key. It does **not** re-sort — a re-sorted list would let a page-2 article jump above articles the reader has already scrolled past.
+   - The **button is the interface**, not a fallback: an IntersectionObserver never fires for keyboard users, and leaves no way to retry a failed fetch.
+   - Fixture mode returns nothing past page 1, or infinite scroll would re-serve the same fixtures forever.
+   - Verified live: page 2 brings 42 genuinely new articles with zero overlap, and at page 6 NewsAPI's free tier 426s — that source fails alone while Guardian and NYT keep the feed going.
 
 ## Two open calls
 

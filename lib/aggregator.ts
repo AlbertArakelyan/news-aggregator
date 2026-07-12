@@ -1,3 +1,4 @@
+import { dedupeByUrl, sortByNewest } from "./articles";
 import guardianFixture from "./sources/__fixtures__/guardian.json";
 import newsapiFixture from "./sources/__fixtures__/newsapi.json";
 import nytFixture from "./sources/__fixtures__/nyt.json";
@@ -54,6 +55,13 @@ async function fetchFromSource(
   query: ArticleQuery,
 ): Promise<Article[]> {
   if (isFixtureMode()) {
+    // A fixture is a single recorded page. Serving it again for page 2 would
+    // hand infinite scroll the same articles forever, so the fixtures simply
+    // run out — which is exactly what a real source does eventually.
+    if ((query.page ?? 1) > 1) {
+      return [];
+    }
+
     // Still goes through parse(), so fixture mode exercises the real
     // normalization path rather than a parallel one that could drift from it.
     return source.parse(FIXTURES[source.id]);
@@ -138,32 +146,6 @@ export function applyUnsupportedFilters(
   return result;
 }
 
-/** The same story is syndicated across providers; keep the first (newest) copy. */
-export function dedupeByUrl(articles: Article[]): Article[] {
-  const seen = new Set<string>();
-
-  return articles.filter((article) => {
-    // Ignore tracking params and trailing slashes, or the same story survives
-    // twice under two spellings of one url.
-    const key = article.url.split("?")[0].replace(/\/+$/, "").toLowerCase();
-
-    if (seen.has(key)) {
-      return false;
-    }
-
-    seen.add(key);
-
-    return true;
-  });
-}
-
-export function sortByNewest(articles: Article[]): Article[] {
-  return [...articles].sort(
-    (a, b) =>
-      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
-  );
-}
-
 /**
  * Fan out to every configured source, normalize, and merge.
  *
@@ -183,30 +165,43 @@ export async function aggregate(query: ArticleQuery): Promise<AggregateResult> {
 
   const settled = await Promise.allSettled(
     selected.map(async (source) => {
-      const articles = await fetchFromSource(source, query);
+      const fetched = await fetchFromSource(source, query);
 
       // Fixtures bypass buildUrl, so the provider applied nothing.
       const effective = isFixtureMode()
         ? { ...source, capabilities: NOTHING_SUPPORTED }
         : source;
 
-      return applyUnsupportedFilters(articles, effective, query);
+      return {
+        // The count *before* our in-memory filtering. This is what says whether
+        // the provider has more pages — filtering to zero on one page does not
+        // mean the source is exhausted, and using the filtered count would end
+        // the feed early whenever a filter happened to be aggressive.
+        fetchedCount: fetched.length,
+        articles: applyUnsupportedFilters(fetched, effective, query),
+      };
     }),
   );
 
   const sources: SourceResult[] = [];
   let articles: Article[] = [];
+  let hasMore = false;
 
   settled.forEach((outcome, index) => {
     const source = selected[index];
 
     if (outcome.status === "fulfilled") {
-      articles = articles.concat(outcome.value);
+      articles = articles.concat(outcome.value.articles);
+
+      if (outcome.value.fetchedCount > 0) {
+        hasMore = true;
+      }
+
       sources.push({
         id: source.id,
         name: source.name,
         ok: true,
-        count: outcome.value.length,
+        count: outcome.value.articles.length,
       });
 
       return;
@@ -224,5 +219,5 @@ export async function aggregate(query: ArticleQuery): Promise<AggregateResult> {
     });
   });
 
-  return { articles: sortByNewest(dedupeByUrl(articles)), sources };
+  return { articles: sortByNewest(dedupeByUrl(articles)), sources, hasMore };
 }

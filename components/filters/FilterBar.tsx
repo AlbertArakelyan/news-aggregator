@@ -27,7 +27,16 @@ const FilterBar = ({
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   return (
-    <div className={className} {...rest}>
+    // Sticky lives on the *grid item*, not on something inside it.
+    //
+    // `lg:self-start` is what makes it work: a grid item stretches to the row
+    // height by default, and an element that already fills its containing block
+    // has nowhere to stick to. Shrinking it to its content gives it the rest of
+    // the row to travel through as the feed scrolls.
+    <div
+      className={`lg:sticky lg:top-8 lg:self-start ${className}`}
+      {...rest}
+    >
       {/* Mobile: a trigger, and the panel inside a Drawer. */}
       <div className="lg:hidden">
         <Button
@@ -66,7 +75,10 @@ const FilterBar = ({
 
       {/* Desktop: the same panel, always visible. */}
       <aside className="hidden lg:block">
-        <div className="sticky top-8 flex flex-col gap-6 rounded-lg border border-border-color bg-surface p-5">
+        {/* The panel can outgrow a short viewport — eight categories, three
+            sources, two dates and a search box. Cap it and let it scroll
+            internally, or the bottom filters become unreachable while pinned. */}
+        <div className="flex max-h-[calc(100vh-4rem)] flex-col gap-6 overflow-y-auto rounded-lg border border-border-color bg-surface p-5">
           <div className="flex items-center justify-between">
             <h2 className="font-medium">Filters</h2>
 

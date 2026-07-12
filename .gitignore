@@ -30,8 +30,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files — real secrets never get committed (this repo is public).
+# .env.example is the exception: keys only, no values.
 .env*
+!.env.example
 
 # vercel
 .vercel

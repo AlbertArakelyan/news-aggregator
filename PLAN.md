@@ -50,7 +50,6 @@ Each adapter does two mappings: internal `ArticleQuery` → its provider's query
    hooks/useTheme.ts      useSyncExternalStore over localStorage + matchMedia
    pages/_document.tsx    runs the no-flash script in <head>
    pages/_app.tsx         Geist font variables, app-wide
-   pages/ui.tsx           component gallery (Storybook stand-in) — delete before delivery
    ```
 
    **Two token layers.** A raw palette (literal colors, never referenced by a component) and semantic aliases (`--surface`, `--muted-text`, `--danger`) which are the *only* layer Tailwind exposes. Theming is therefore a swap of the alias layer: `.dark` re-points the same names at different raw values and every component follows without changing a class. Components use `bg-surface` / `text-muted-text`, never `bg-white` or a hex.
@@ -118,7 +117,7 @@ Each adapter does two mappings: internal `ArticleQuery` → its provider's query
 
    `getStaticProps` / `getStaticPaths` are not usable for this feed: it depends on a per-request query string. They would suit a future unfiltered "top headlines" page or per-category routes.
 
-   The component gallery at **`pages/ui.tsx`** stays alongside it as a Storybook stand-in and must be updated whenever a primitive changes. Delete it before final delivery.
+   The component gallery that lived at `pages/ui.tsx` served as a Storybook stand-in during development and was **deleted before delivery** — it was scaffolding, not product.
 
    Feature components do **not** get a folder each — that pattern is reserved for UI primitives. They are flat PascalCase files grouped by feature, sharing one `types.ts` per feature folder, exactly as Lumark does it in `Layouts/MainLayout/FilesPanel/`:
 

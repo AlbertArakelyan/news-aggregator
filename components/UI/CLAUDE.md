@@ -11,13 +11,11 @@ The pattern is taken from the sibling **Lumark** project — `../Lumark/src/comp
 
 Before writing new markup elsewhere, scan this folder first and reuse what exists. If a primitive is *missing*, add it here rather than reaching for an external UI library.
 
-## The gallery at `/ui` — keep it in sync
+## Verifying a primitive
 
-`pages/ui.tsx` renders every primitive in every variant. It is our stand-in for Storybook, and the only place the whole library is visible at once.
+There was a component gallery at `pages/ui.tsx` — a Storybook stand-in rendering every primitive in every variant. **It was deleted before delivery**, deliberately: it was developer scaffolding, not product.
 
-**Adding a component, or changing its props or variants, means updating `pages/ui.tsx` in the same change.** A variant that is not in the gallery is a variant nobody looks at, and it will break unnoticed. Add the new component as its own `<Section>`, showing each variant, each size, and the disabled / loading / error states where they apply.
-
-It is developer scaffolding, not product: **delete `pages/ui.tsx` before final delivery.**
+So a new or changed primitive is exercised through the feed itself (`/`, including its filter drawer and preferences drawer) and through `yarn test`. If you want the gallery back while working, `git show e95e664:pages/ui.tsx` will recover it — but do not ship it.
 
 ## The pattern (non-negotiable)
 

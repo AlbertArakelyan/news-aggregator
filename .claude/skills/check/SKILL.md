@@ -18,13 +18,15 @@ Both must be clean. `yarn lint` enforces `react-hooks/set-state-in-effect` — i
 ## 2. Boot and drive it
 
 ```bash
-nohup yarn start > /dev/null 2>&1 &
-sleep 5
+# NEWS_FIXTURES=1 serves the recorded fixtures, so this needs no API keys and
+# burns no free-tier quota.
+nohup env NEWS_FIXTURES=1 yarn start > /dev/null 2>&1 &
+sleep 6
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/ui
+curl -s "http://localhost:3000/api/articles?categories=science" | jq '.articles | length'
 ```
 
-Then assert on the actual response, not just the status code — grep the HTML for the thing you changed.
+Then assert on the actual response, not just the status code — grep the HTML for the thing you changed. Drive the filters through the URL (`/?q=…`, `/?categories=…`, `/?sources=…`), since that is the whole data path.
 
 Stop it when done, and confirm the port is free:
 

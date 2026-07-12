@@ -71,8 +71,12 @@ const guardian: NewsSource = {
       url.searchParams.set("to-date", query.to);
     }
 
-    if (query.category) {
-      url.searchParams.set("section", SECTIONS[query.category]);
+    if (query.categories?.length) {
+      // The Guardian's `section` accepts a pipe-separated OR: "technology|science".
+      url.searchParams.set(
+        "section",
+        query.categories.map((category) => SECTIONS[category]).join("|"),
+      );
     }
 
     return url.toString();

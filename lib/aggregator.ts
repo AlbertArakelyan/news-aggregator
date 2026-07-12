@@ -97,12 +97,16 @@ export function applyUnsupportedFilters(
     );
   }
 
-  if (query.category && !source.capabilities.category) {
+  if (query.categories?.length && !source.capabilities.category) {
+    const wanted = query.categories;
+
     // A provider that does not report categories (NewsAPI's /everything) yields
     // articles with category === null, which cannot match — so an unsupported
     // category filter correctly excludes that source rather than leaking
     // unfiltered results into a filtered feed.
-    result = result.filter((article) => article.category === query.category);
+    result = result.filter(
+      (article) => article.category !== null && wanted.includes(article.category),
+    );
   }
 
   if (query.from && !source.capabilities.dateRange) {

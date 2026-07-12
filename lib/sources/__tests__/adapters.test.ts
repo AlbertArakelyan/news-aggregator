@@ -47,9 +47,18 @@ describe("guardian", () => {
 
   it("maps health onto the society section, which is what the Guardian has", () => {
     vi.stubEnv("GUARDIAN_API_KEY", "k");
-    const url = new URL(guardian.buildUrl({ category: "health" }));
+    const url = new URL(guardian.buildUrl({ categories: ["health"] }));
 
     expect(url.searchParams.get("section")).toBe("society");
+  });
+
+  it("ORs several categories with a pipe, which is the Guardian's syntax", () => {
+    vi.stubEnv("GUARDIAN_API_KEY", "k");
+    const url = new URL(
+      guardian.buildUrl({ categories: ["science", "technology"] }),
+    );
+
+    expect(url.searchParams.get("section")).toBe("science|technology");
   });
 
   it("requests the fields the response otherwise omits", () => {
@@ -99,7 +108,7 @@ describe("nyt", () => {
 
   it("filters on section.name with a DOT, not the response's section_name", () => {
     vi.stubEnv("NYT_API_KEY", "k");
-    const url = new URL(nyt.buildUrl({ category: "business" }));
+    const url = new URL(nyt.buildUrl({ categories: ["business"] }));
 
     // Regression test for a bug that failed *silently*: querying `section_name`
     // (the spelling NYT uses in its responses) returns 200 with zero hits, so
@@ -107,6 +116,15 @@ describe("nyt", () => {
     // Confirmed against the live API.
     expect(url.searchParams.get("fq")).toBe('section.name:("Business Day")');
     expect(url.searchParams.get("fq")).not.toContain("section_name");
+  });
+
+  it("ORs several categories inside one fq parens group", () => {
+    vi.stubEnv("NYT_API_KEY", "k");
+    const url = new URL(nyt.buildUrl({ categories: ["science", "technology"] }));
+
+    expect(url.searchParams.get("fq")).toBe(
+      'section.name:("Science" "Technology")',
+    );
   });
 
   it("is zero-indexed on page, unlike the others", () => {

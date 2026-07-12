@@ -63,7 +63,12 @@ export interface ArticleQuery {
   /** YYYY-MM-DD. */
   from?: string;
   to?: string;
-  category?: CategoryId;
+  /**
+   * Plural, because the brief's personalized feed selects preferred *categories*.
+   * A single-valued filter could not express that, and the providers do support
+   * OR: Guardian's `section` takes `a|b`, NYT's `fq` takes `("A" "B")`.
+   */
+  categories?: CategoryId[];
   /** Post-normalization filter — no provider does author filtering reliably. */
   authors?: string[];
   /** Which sources to query. Omitted means all configured ones. */

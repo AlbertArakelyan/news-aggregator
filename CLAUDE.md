@@ -60,7 +60,7 @@ Rules are **scoped**: each folder carries the rules for its own module, loaded a
 
 **Skills** (`/name`, or Claude invokes them when relevant):
 
-- `/add-ui-primitive <Name>` — scaffold a primitive to the pattern, and add it to the gallery
+- `/add-ui-primitive <Name>` — scaffold a primitive to the project's component pattern
 - `/add-news-source <name>` — add a provider adapter that normalizes onto `Article`
 - `/add-design-token` — add a color correctly: both files, plus the WCAG check
 - `/check` — verify for real: lint, build, boot, drive the routes, inspect the emitted CSS
@@ -157,7 +157,7 @@ Everything provider-facing is **server-side**, because this repo is public and t
 
 `lib/query.ts` must **never** import `registry.ts` — the filter UI imports `query.ts`, and the registry pulls in every adapter, which would put the provider endpoints and the key-reading code into the browser bundle. That is why the canonical source-id list lives in the import-free `lib/sources/types.ts`.
 
-`pages/ui.tsx` is a component gallery (a Storybook stand-in) rendering every primitive in every variant. Keep it in sync when the library changes, and **delete it before final delivery** — it is developer scaffolding, not product.
+The component gallery that once lived at `pages/ui.tsx` has been **deleted** — it was developer scaffolding, not product. Primitives are now exercised through the feed itself and through `yarn test`. (`git show e95e664:pages/ui.tsx` recovers it if you want it locally; do not ship it.)
 
 ## Theming and design tokens
 

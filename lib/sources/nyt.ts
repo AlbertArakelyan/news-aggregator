@@ -104,8 +104,10 @@ const nyt: NewsSource = {
       url.searchParams.set("end_date", toNytDate(query.to));
     }
 
-    if (query.category) {
-      // Filter Query syntax — Lucene-ish, and the quotes are required.
+    if (query.categories?.length) {
+      // Filter Query syntax — Lucene-ish, and the quotes are required. Several
+      // quoted values inside one set of parens are OR'd:
+      //   section.name:("Science" "Technology")
       //
       // The field is `section.name` with a DOT, even though the same field comes
       // back in the response as `section_name` with an underscore. Using the
@@ -114,7 +116,11 @@ const nyt: NewsSource = {
       // nothing anywhere reports a problem. Verified against the live API —
       // section.name:("World") returns 10,000 hits, section_name:("World")
       // returns zero.
-      url.searchParams.set("fq", `section.name:("${SECTIONS[query.category]}")`);
+      const sections = query.categories
+        .map((category) => `"${SECTIONS[category]}"`)
+        .join(" ");
+
+      url.searchParams.set("fq", `section.name:(${sections})`);
     }
 
     return url.toString();

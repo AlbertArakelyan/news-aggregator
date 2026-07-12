@@ -10,8 +10,14 @@ describe("parseArticleQuery", () => {
   });
 
   it("drops an unknown category rather than filtering on nonsense", () => {
-    expect(parseArticleQuery({ category: "sports" }).category).toBeUndefined();
-    expect(parseArticleQuery({ category: "sport" }).category).toBe("sport");
+    expect(parseArticleQuery({ categories: "sports" }).categories).toEqual([]);
+    expect(parseArticleQuery({ categories: "sport" }).categories).toEqual(["sport"]);
+  });
+
+  it("accepts several categories — the personalized feed selects plural", () => {
+    expect(
+      parseArticleQuery({ categories: "science,technology,bogus" }).categories,
+    ).toEqual(["science", "technology"]);
   });
 
   it("drops an unknown source id", () => {
@@ -34,7 +40,7 @@ describe("parseArticleQuery", () => {
 describe("toQueryParams", () => {
   it("omits empty and default values, so a cleared filter leaves no litter", () => {
     expect(toQueryParams({ page: 1, pageSize: 20 })).toEqual({});
-    expect(toQueryParams({ keyword: "", category: undefined })).toEqual({});
+    expect(toQueryParams({ keyword: "", categories: [] })).toEqual({});
   });
 
   it("keeps a page only when it is past the first", () => {
@@ -49,7 +55,7 @@ describe("toQueryParams", () => {
       keyword: "climate",
       from: "2026-07-01",
       to: "2026-07-12",
-      category: "science" as const,
+      categories: ["science" as const, "technology" as const],
       sources: ["guardian" as const, "nyt" as const],
       authors: ["Jane Doe"],
       page: 2,

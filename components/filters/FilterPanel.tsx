@@ -1,21 +1,16 @@
-import Checkbox from "@/components/UI/Checkbox/Checkbox";
+import CheckboxGroup from "@/components/UI/CheckboxGroup/CheckboxGroup";
 import Input from "@/components/UI/Input/Input";
-import Select from "@/components/UI/Select/Select";
 import { CATEGORY_IDS, CategoryId, SourceId } from "@/lib/sources/types";
 
 import SearchInput from "./SearchInput";
 import { IFilterPanelProps } from "./types";
 
-const CATEGORY_OPTIONS = CATEGORY_IDS.map((id) => ({
-  value: id,
-  // "sport" -> "Sport". The ids are already the label, just lowercased.
-  label: id.charAt(0).toUpperCase() + id.slice(1),
-}));
+const CATEGORY_OPTIONS = CATEGORY_IDS.map((id) => ({ value: id, label: id }));
 
 /**
  * The controls themselves — rendered once, used twice: inline on desktop and
- * inside the Drawer on mobile. Duplicating this markup for the two layouts is
- * exactly the repetition the primitives exist to prevent.
+ * inside the Drawer on mobile. Duplicating this markup per breakpoint is exactly
+ * the repetition the primitives exist to prevent.
  *
  * Presentational: it holds no filter state, and reports every change upward.
  */
@@ -26,16 +21,6 @@ const FilterPanel = ({
   className = "",
   ...rest
 }: IFilterPanelProps) => {
-  const selectedSources = filters.sources ?? [];
-
-  const toggleSource = (id: SourceId, isChecked: boolean) => {
-    onFiltersChange({
-      sources: isChecked
-        ? [...selectedSources, id]
-        : selectedSources.filter((source) => source !== id),
-    });
-  };
-
   return (
     <form
       // A filter change applies immediately; submitting would only reload.
@@ -48,16 +33,14 @@ const FilterPanel = ({
         onSearch={(keyword) => onFiltersChange({ keyword: keyword || undefined })}
       />
 
-      <Select
-        label="Category"
-        placeholder="Any category"
+      {/* Nothing checked means "all categories" — the same result as checking
+          every box, without making the reader do it. */}
+      <CheckboxGroup<CategoryId>
+        legend="Categories"
         options={CATEGORY_OPTIONS}
-        value={filters.category ?? ""}
-        onChange={(event) =>
-          onFiltersChange({
-            category: (event.target.value || undefined) as CategoryId | undefined,
-          })
-        }
+        selected={filters.categories ?? []}
+        onChange={(categories) => onFiltersChange({ categories })}
+        optionLabelClassName="capitalize"
       />
 
       <fieldset className="flex flex-col gap-3">
@@ -84,27 +67,15 @@ const FilterPanel = ({
         />
       </fieldset>
 
-      <fieldset className="flex flex-col gap-2.5">
-        <legend className="mb-2 text-sm font-medium text-text-color">Sources</legend>
-
-        {/*
-          Checkboxes rather than a multi-select: a native <select multiple> is
-          poor UX on desktop and worse on mobile, and a custom listbox would mean
-          rebuilding keyboard nav and the mobile picker for no gain.
-
-          No source checked means "all sources" — the same result as checking
-          every box, without making the reader do it.
-        */}
-        {sourceOptions.map((source) => (
-          <Checkbox
-            key={source.id}
-            checkboxSize="sm"
-            label={source.name}
-            checked={selectedSources.includes(source.id)}
-            onChange={(event) => toggleSource(source.id, event.target.checked)}
-          />
-        ))}
-      </fieldset>
+      <CheckboxGroup<SourceId>
+        legend="Sources"
+        options={sourceOptions.map((source) => ({
+          value: source.id,
+          label: source.name,
+        }))}
+        selected={filters.sources ?? []}
+        onChange={(sources) => onFiltersChange({ sources })}
+      />
     </form>
   );
 };

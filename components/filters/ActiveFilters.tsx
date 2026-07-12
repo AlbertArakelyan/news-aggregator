@@ -43,14 +43,18 @@ const ActiveFilters = ({
     });
   }
 
-  if (filters.category) {
+  filters.categories?.forEach((category) => {
     pills.push({
-      key: "category",
-      label: filters.category,
-      remove: { category: undefined },
+      key: `category-${category}`,
+      label: category,
+      remove: {
+        categories: (filters.categories ?? []).filter(
+          (item) => item !== category,
+        ),
+      },
       className: "capitalize",
     });
-  }
+  });
 
   if (filters.from) {
     pills.push({ key: "from", label: `From ${filters.from}`, remove: { from: undefined } });

@@ -48,7 +48,6 @@ function date(value: string | string[] | undefined): string | undefined {
 }
 
 export function parseArticleQuery(raw: RawQuery): ArticleQuery {
-  const category = first(raw.category);
   const pageNumber = Number(first(raw.page) ?? 1);
   const pageSize = Number(first(raw.pageSize) ?? DEFAULT_PAGE_SIZE);
 
@@ -56,9 +55,9 @@ export function parseArticleQuery(raw: RawQuery): ArticleQuery {
     keyword: first(raw.q),
     from: date(raw.from),
     to: date(raw.to),
-    category: CATEGORY_IDS.includes(category as CategoryId)
-      ? (category as CategoryId)
-      : undefined,
+    categories: list(raw.categories).filter((id): id is CategoryId =>
+      CATEGORY_IDS.includes(id as CategoryId),
+    ),
     authors: list(raw.authors),
     sources: list(raw.sources).filter((id): id is SourceId =>
       SOURCE_IDS.includes(id as SourceId),
@@ -90,8 +89,8 @@ export function toQueryParams(query: ArticleQuery): Record<string, string> {
     params.to = query.to;
   }
 
-  if (query.category) {
-    params.category = query.category;
+  if (query.categories?.length) {
+    params.categories = query.categories.join(",");
   }
 
   if (query.authors?.length) {

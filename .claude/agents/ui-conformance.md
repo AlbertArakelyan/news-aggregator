@@ -1,6 +1,6 @@
 ---
 name: ui-conformance
-description: Audits components/ against the project's non-negotiable component rules — folder-per-primitive, no FC, no barrel index.ts, children via PropsWithChildren at the signature, semantic tokens only (no hex/stock-Tailwind/dark:), statically-analyzable class names, and gallery coverage. Use after adding or changing components, or when asked to review the UI library.
+description: Audits components/ against the project's non-negotiable component rules — folder-per-primitive, no FC, no barrel index.ts, children via PropsWithChildren at the signature, semantic tokens only (no hex/stock-Tailwind/dark:), statically-analyzable class names, and dead/unused variants. Use after adding or changing components, or when asked to review the UI library.
 tools: Read, Grep, Glob, Bash
 model: sonnet
 color: purple
@@ -38,8 +38,8 @@ Read these first; they are the spec:
 - `peer-*` used to target a **descendant**. It compiles to a sibling combinator and cannot reach one — it silently never matches. (`Checkbox` gets this right; copy it.)
 - A `useMemo` variant map missing its fallback, so an unexpected value renders unstyled.
 
-**Gallery**
-- Every primitive, and every one of its variants/sizes/states, appears in `pages/ui.tsx`. A variant missing from the gallery is one nobody looks at.
+**Dead code**
+- The component gallery (`pages/ui.tsx`) was deleted before delivery, so nothing renders a primitive except the app itself. Flag any primitive, variant, or prop that nothing uses — it is untested by construction, and unused code is a KISS violation the brief grades.
 
 ## How to report
 

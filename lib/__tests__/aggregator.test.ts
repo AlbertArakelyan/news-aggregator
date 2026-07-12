@@ -74,7 +74,7 @@ describe("applyUnsupportedFilters", () => {
     // alternative — passing them through — would leak unfiltered results into a
     // filtered feed, which is the silent failure this design exists to prevent.
     const filtered = applyUnsupportedFilters(newsapiArticles, newsapi, {
-      category: "technology",
+      categories: ["technology"],
     });
 
     expect(filtered).toHaveLength(0);
@@ -84,7 +84,7 @@ describe("applyUnsupportedFilters", () => {
     expect(guardian.capabilities.category).toBe(true);
 
     const filtered = applyUnsupportedFilters(guardianArticles, guardian, {
-      category: "technology",
+      categories: ["technology"],
     });
 
     // Untouched: the Guardian filtered by section server-side, so re-filtering

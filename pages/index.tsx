@@ -6,8 +6,11 @@ import SourceStatus from "@/components/feed/SourceStatus";
 import ActiveFilters from "@/components/filters/ActiveFilters";
 import FilterBar from "@/components/filters/FilterBar";
 import { ISourceOption } from "@/components/filters/types";
+import PreferencesButton from "@/components/preferences/PreferencesButton";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import useArticleFilters from "@/hooks/useArticleFilters";
+import usePersonalizedDefaults from "@/hooks/usePersonalizedDefaults";
+import usePreferences from "@/hooks/usePreferences";
 import useRouteLoading from "@/hooks/useRouteLoading";
 import { aggregate } from "@/lib/aggregator";
 import { parseArticleQuery } from "@/lib/query";
@@ -20,7 +23,13 @@ interface FeedProps extends AggregateResult {
 
 export default function Feed({ articles, sources, sourceOptions }: FeedProps) {
   const { filters, isActive, setFilters, clearFilters } = useArticleFilters();
+  const { preferences } = usePreferences();
   const isLoading = useRouteLoading();
+
+  // Saved preferences become URL filters on a bare visit — so the personalized
+  // feed is the same feed, on the same single data path, and stays a shareable
+  // link. An explicit filter in the URL always outranks a stored default.
+  usePersonalizedDefaults(preferences, filters);
 
   return (
     <>
@@ -45,7 +54,10 @@ export default function Feed({ articles, sources, sourceOptions }: FeedProps) {
             </p>
           </div>
 
-          <ThemeToggle />
+          <div className="flex items-center gap-3">
+            <PreferencesButton sourceOptions={sourceOptions} />
+            <ThemeToggle />
+          </div>
         </header>
 
         <div className="grid gap-8 lg:grid-cols-[16rem_1fr]">

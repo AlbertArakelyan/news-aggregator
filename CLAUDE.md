@@ -58,7 +58,11 @@ An interview take-home: the UI for a **news aggregator** that pulls articles fro
 
 ## State of the codebase
 
-Docker, the README, and `PLAN.md` are done. The application itself is still the unmodified `create-next-app` scaffold — `pages/index.tsx` is the Vercel splash page, `pages/api/hello.ts` is the sample handler, and `public/` holds the default SVGs. None of the news-aggregator features are built. Treat all of that as replaceable.
+Done: Docker, the README, the design system (`styles/base.css` + theming), and the ten UI primitives in `components/UI`. See `PLAN.md` — steps 1 and 2 are complete.
+
+Not built: everything that makes it a news aggregator. No source adapters, no `/api/articles`, no feed, no search, no filters, no preferences. `pages/index.tsx` is a `Hello world` placeholder and `pages/api/hello.ts` is still the create-next-app sample — treat both as replaceable.
+
+`pages/ui.tsx` is a component gallery (a Storybook stand-in) rendering every primitive in every variant. Keep it in sync when the library changes, and **delete it before final delivery** — it is developer scaffolding, not product.
 
 ## Theming and design tokens
 

@@ -50,7 +50,7 @@ Each adapter does two mappings: internal `ArticleQuery` → its provider's query
    hooks/useTheme.ts      useSyncExternalStore over localStorage + matchMedia
    pages/_document.tsx    runs the no-flash script in <head>
    pages/_app.tsx         Geist font variables, app-wide
-   pages/index.tsx        temporary token preview — replaced by the feed in step 4
+   pages/ui.tsx           component gallery (Storybook stand-in) — delete before delivery
    ```
 
    **Two token layers.** A raw palette (literal colors, never referenced by a component) and semantic aliases (`--surface`, `--muted-text`, `--danger`) which are the *only* layer Tailwind exposes. Theming is therefore a swap of the alias layer: `.dark` re-points the same names at different raw values and every component follows without changing a class. Components use `bg-surface` / `text-muted-text`, never `bg-white` or a hex.
@@ -107,7 +107,9 @@ Each adapter does two mappings: internal `ArticleQuery` → its provider's query
    Multi-selection (sources, categories, authors) is done with `Checkbox` groups rather than a `multiple` `<select>`, which is poor UX on both desktop and mobile. `Select` is a styled *native* `<select>`: keyboard navigation, type-ahead, and the mobile OS picker come free, and none of it is worth reimplementing as a custom listbox.
 
 3. **Types + adapters + aggregator** with the `/api/articles` route — pure functions, no UI. Testable in isolation.
-4. **Feed UI**: article card, list, loading/empty/error states, responsive layout — composed from the step-2 primitives, adding no new raw Tailwind beyond layout. Replaces the temporary design-system preview at `pages/index.tsx`.
+4. **Feed UI**: article card, list, loading/empty/error states, responsive layout — composed from the step-2 primitives, adding no new raw Tailwind beyond layout. Replaces the `Hello world` placeholder at `pages/index.tsx`.
+
+   The component gallery at **`pages/ui.tsx`** stays alongside it as a Storybook stand-in and must be updated whenever a primitive changes. Delete it before final delivery.
 
    Feature components do **not** get a folder each — that pattern is reserved for UI primitives. They are flat PascalCase files grouped by feature, sharing one `types.ts` per feature folder, exactly as Lumark does it in `Layouts/MainLayout/FilesPanel/`:
 

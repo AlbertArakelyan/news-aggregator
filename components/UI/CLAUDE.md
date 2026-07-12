@@ -11,6 +11,14 @@ The pattern is taken from the sibling **Lumark** project — `../Lumark/src/comp
 
 Before writing new markup elsewhere, scan this folder first and reuse what exists. If a primitive is *missing*, add it here rather than reaching for an external UI library.
 
+## The gallery at `/ui` — keep it in sync
+
+`pages/ui.tsx` renders every primitive in every variant. It is our stand-in for Storybook, and the only place the whole library is visible at once.
+
+**Adding a component, or changing its props or variants, means updating `pages/ui.tsx` in the same change.** A variant that is not in the gallery is a variant nobody looks at, and it will break unnoticed. Add the new component as its own `<Section>`, showing each variant, each size, and the disabled / loading / error states where they apply.
+
+It is developer scaffolding, not product: **delete `pages/ui.tsx` before final delivery.**
+
 ## The pattern (non-negotiable)
 
 1. **File layout**: `<Name>/<Name>.tsx` + `<Name>/types.ts`. One folder per component. `export default` the component.

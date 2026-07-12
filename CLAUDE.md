@@ -73,7 +73,7 @@ Rules are **scoped**: each folder carries the rules for its own module, loaded a
 **A `PreToolUse` hook blocks two commands** (`.claude/hooks/guard-bash.sh`), because both are easy to run from muscle memory and expensive to undo:
 
 - **`npm`** — the lockfile is `yarn.lock`; an `npm install` would resolve a different tree.
-- **`git add -A` / `git add .` / `git commit -a`** — this repo is public and holds the employer's case-study PDF. Stage by explicit path.
+- **`git add -A` / `git add .` / `git commit -a`** — this repo is public, and the working tree holds local-only files that must never be committed. Stage by explicit path and check `git diff --cached --name-only` before committing.
 
 ## Commands
 
@@ -129,7 +129,7 @@ Two consequences worth knowing before you change things:
 
 ## What this project is
 
-An interview take-home: the UI for a **news aggregator** that pulls articles from several news APIs and displays them in a clean, readable feed. The full brief is the one-page PDF at the repo root, `CS_Frontend Developer_2025.pdf`. Its requirements:
+An interview take-home: the UI for a **news aggregator** that pulls articles from several news APIs and displays them in a clean, readable feed. The requirements it was given:
 
 - **Search and filtering** — search articles by keyword; filter results by date, category, and source.
 - **Personalized feed** — users pick preferred sources, categories, and authors.

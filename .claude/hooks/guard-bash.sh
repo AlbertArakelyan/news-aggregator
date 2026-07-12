@@ -9,8 +9,9 @@
 #      package-lock.json.
 #
 #   2. Bulk git staging (`git add -A`, `git add .`, `git commit -a`) — this repo
-#      is public and holds the employer's case-study PDF. Bulk staging is exactly
-#      how that file, or a stray .env, gets committed. Stage by explicit path.
+#      is public, and the working tree holds local-only files that must never be
+#      committed: a real .env, editor droppings, scratch notes. Bulk staging is
+#      exactly how one of them gets swept in. Stage by explicit path.
 #
 # Deny is emitted as JSON on exit 0 so the reason reaches Claude verbatim.
 
@@ -60,7 +61,7 @@ fi
 
 # --- 2. bulk git staging --------------------------------------------------
 if printf '%s' "$clean" | grep -qE 'git[[:space:]]+add[[:space:]]+(-A|--all|\.)([[:space:]]|$)'; then
-  deny "Bulk staging is blocked in this repo. It is public and contains the employer's case-study PDF (CS_Frontend Developer_2025.pdf), which must never be committed. Stage by explicit path instead: git add <file> <file>. Then verify with: git diff --cached --name-only"
+  deny "Bulk staging is blocked in this repo. It is public, and the working tree holds local-only files that must never be committed. Stage by explicit path instead: git add <file> <file>. Then verify with: git diff --cached --name-only"
 fi
 
 # Catches -a and combined clusters like -am. Not --amend: the alternation needs a
